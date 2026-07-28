@@ -1,5 +1,7 @@
+using MergeGame.Server.Application.Players;
 using MergeGame.Server.Endpoints;
 using MergeGame.Server.Infrastructure.Persistence;
+using MergeGame.Server.Infrastructure.Security;
 
 // WebApplicationBuilder는 설정 파일, 환경 변수, 로깅, DI 컨테이너를 한 번에 준비합니다.
 // 명령줄 인수를 전달해야 --urls 같은 ASP.NET Core 기본 옵션도 정상 동작합니다.
@@ -18,6 +20,12 @@ builder.Logging.AddSimpleConsole(options =>
 // 데이터 접근에 필요한 서비스를 한곳에서 등록합니다.
 // Program.cs가 데이터베이스 구현 세부사항으로 복잡해지는 것을 막기 위해 확장 메서드로 분리했습니다.
 builder.Services.AddPersistence(builder.Configuration);
+
+// 게스트 계정 생성 유스케이스와 보안 토큰 생성기를 등록합니다.
+// 인터페이스를 기준으로 등록해 테스트에서는 실제 난수 생성기 대신 예측 가능한 구현으로 교체할 수 있습니다.
+builder.Services.AddScoped<CreateGuestPlayerService>();
+builder.Services.AddSingleton<IGuestCredentialGenerator, GuestCredentialGenerator>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 // 헬스 체크는 서버 프로세스와 MySQL 연결 상태를 외부 모니터링 시스템에 알려 줍니다.
 // 데이터베이스 검사는 AddPersistence 내부에서 등록합니다.

@@ -11,7 +11,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0" />
+    <!-- 마이그레이션 생성 도구가 서버의 EF Core 모델을 분석할 때만 사용합니다. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.29">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- 모든 EF Core 어셈블리를 같은 보안 패치 버전으로 통일합니다. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.29" />
+    <!-- EF Core 모델을 MySQL 8용 SQL과 데이터 형식으로 변환하는 공급자입니다. -->
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
   </ItemGroup>
 
 </Project>

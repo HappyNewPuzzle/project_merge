@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 테스트 실행기와 코드 커버리지 수집기입니다. 배포 서버 결과물에는 포함되지 않습니다. -->
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- 실제 MySQL 없이 서비스의 EF Core 저장 동작을 빠르게 검증합니다. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.29" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 테스트가 서버의 도메인, 애플리케이션, 인프라 코드를 직접 검증할 수 있게 참조합니다. -->
+    <ProjectReference Include="..\..\src\MergeGame.Server\MergeGame.Server.csproj" />
+  </ItemGroup>
+
+</Project>

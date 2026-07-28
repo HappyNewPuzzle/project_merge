@@ -12,6 +12,7 @@
 ## 현재 단계
 
 - [1단계: 서버 및 MySQL 기반 구성](docs/stages/01-server-foundation.md)
+- [2단계: 플레이어 모델 및 게스트 계정 생성](docs/stages/02-guest-player.md)
 
 ## 빠른 실행
 
@@ -19,6 +20,17 @@
 2. `ConnectionStrings__MergeGameDatabase` 환경 변수에 실제 연결 정보를 설정합니다.
 3. `dotnet restore` 후 `dotnet run --project src/MergeGame.Server`를 실행합니다.
 4. 브라우저 또는 API 도구에서 `/`와 `/health`를 확인합니다.
+
+## 게스트 계정 생성
+
+MySQL 스키마를 적용한 뒤 다음 API로 새 플레이어를 생성합니다.
+
+```powershell
+curl.exe -X POST https://localhost:7001/api/v1/players/guest
+```
+
+응답의 `guestToken`은 원문을 다시 조회할 수 없으므로 클라이언트 보안 저장소에
+즉시 보관해야 합니다.
 
 > 저장소의 기본 연결 문자열에 있는 `CHANGE_ME`는 문서용 값입니다.
 > 실제 비밀번호를 `appsettings*.json`이나 Git 커밋에 포함하지 마세요.

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Domain.Players;
 
 namespace MergeGame.Server.Infrastructure.Persistence;
 
@@ -9,11 +10,28 @@ namespace MergeGame.Server.Infrastructure.Persistence;
 public sealed class MergeGameDbContext : DbContext
 {
     /// <summary>
+    /// 게임에 가입한 플레이어를 조회하고 저장하는 컬렉션입니다.
+    /// </summary>
+    public DbSet<Player> Players => Set<Player>();
+
+    /// <summary>
     /// DI 컨테이너가 구성한 MySQL 연결 옵션을 받아 DbContext를 생성합니다.
     /// </summary>
     /// <param name="options">연결 문자열과 MySQL 공급자 설정이 포함된 EF Core 옵션입니다.</param>
     public MergeGameDbContext(DbContextOptions<MergeGameDbContext> options)
         : base(options)
     {
+    }
+
+    /// <summary>
+    /// 현재 어셈블리에 정의된 엔티티별 구성 클래스를 자동으로 적용합니다.
+    /// </summary>
+    /// <param name="modelBuilder">EF Core 데이터베이스 모델 구성기입니다.</param>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // IEntityTypeConfiguration 구현을 자동 탐색하므로 엔티티가 늘어나도 이 메서드를 수정할 필요가 없습니다.
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MergeGameDbContext).Assembly);
     }
 }

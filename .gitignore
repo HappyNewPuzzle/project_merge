@@ -1,6 +1,7 @@
 # .NET 빌드 결과물
 bin/
 obj/
+.dotnet_home/
 
 # IDE별 사용자 설정
 .vs/
