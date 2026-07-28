@@ -1,5 +1,7 @@
+using MergeGame.Server.Application.Authentication;
 using MergeGame.Server.Application.Players;
 using MergeGame.Server.Endpoints;
+using MergeGame.Server.Infrastructure.Authentication;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Security;
 
@@ -24,8 +26,14 @@ builder.Services.AddPersistence(builder.Configuration);
 // 게스트 계정 생성 유스케이스와 보안 토큰 생성기를 등록합니다.
 // 인터페이스를 기준으로 등록해 테스트에서는 실제 난수 생성기 대신 예측 가능한 구현으로 교체할 수 있습니다.
 builder.Services.AddScoped<CreateGuestPlayerService>();
+builder.Services.AddScoped<AuthenticateGuestPlayerService>();
+builder.Services.AddScoped<GetPlayerProfileService>();
 builder.Services.AddSingleton<IGuestCredentialGenerator, GuestCredentialGenerator>();
 builder.Services.AddSingleton(TimeProvider.System);
+
+// JWT 검증, 현재 플레이어 식별, 로그인 요청 속도 제한을 한 번에 등록합니다.
+// 서명 키가 누락되거나 안전하지 않으면 등록 시 즉시 실패해 잘못된 인증 서버가 실행되지 않게 합니다.
+builder.Services.AddPlayerAuthentication(builder.Configuration);
 
 // 헬스 체크는 서버 프로세스와 MySQL 연결 상태를 외부 모니터링 시스템에 알려 줍니다.
 // 데이터베이스 검사는 AddPersistence 내부에서 등록합니다.
@@ -36,6 +44,14 @@ var app = builder.Build();
 // HTTPS 리디렉션을 적용해 로그인 토큰이나 게임 데이터가 평문 HTTP로 전달되는 것을 방지합니다.
 // 로컬 개발에서 HTTP 주소만 사용할 때는 launchSettings.json의 HTTPS 프로필을 사용하면 됩니다.
 app.UseHttpsRedirection();
+
+// 엔드포인트별 속도 제한은 라우트 선택 이후 적용되어야 하므로 명시적으로 라우팅을 먼저 실행합니다.
+app.UseRouting();
+app.UseRateLimiter();
+
+// 인증이 Authorization 헤더를 검증해 User를 만든 뒤, 권한 미들웨어가 보호 API 접근을 결정합니다.
+app.UseAuthentication();
+app.UseAuthorization();
 
 // 단계별 엔드포인트 매핑을 별도 파일로 분리해 Program.cs를 애플리케이션 조립 역할에 집중시킵니다.
 app.MapServerEndpoints();

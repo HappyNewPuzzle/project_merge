@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 
 namespace MergeGame.Server.Infrastructure.Security;
 
@@ -22,10 +21,8 @@ public sealed class GuestCredentialGenerator : IGuestCredentialGenerator
             .Replace('+', '-')
             .Replace('/', '_');
 
-        // DB가 유출돼도 원본 토큰을 바로 사용할 수 없도록 해시만 저장합니다.
-        // 토큰 자체의 엔트로피가 충분히 높으므로 사용자 비밀번호용 느린 KDF 대신 빠른 SHA-256이 적합합니다.
-        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
-        var tokenHash = Convert.ToHexString(hashBytes);
+        // 생성과 로그인 검증이 같은 해시 규칙을 사용하도록 공용 해시 함수에 위임합니다.
+        var tokenHash = GuestTokenHasher.Hash(rawToken);
 
         return new GuestCredential(rawToken, tokenHash);
     }
