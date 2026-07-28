@@ -15,6 +15,7 @@
 - [2단계: 플레이어 모델 및 게스트 계정 생성](docs/stages/02-guest-player.md)
 - [3단계: 게스트 로그인 및 JWT 인증](docs/stages/03-guest-authentication.md)
 - [4단계: 플레이어 보드 및 서버 검증 머지](docs/stages/04-board-and-merge.md)
+- [5단계: 에너지·재화·아이템 생성기](docs/stages/05-economy-and-generator.md)
 
 ## 빠른 실행
 
@@ -51,6 +52,15 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 모든 보드 API는 Bearer JWT가 필요합니다. 변경 요청에는 마지막으로 받은 `revision`을
 보내야 하며, 자세한 규칙은 [4단계 문서](docs/stages/04-board-and-merge.md)에 있습니다.
+
+## 경제 API
+
+- `POST /api/v1/economy/`: 최대 에너지 100, 코인 0으로 최초 초기화
+- `GET /api/v1/economy/`: 서버 시간 기준 에너지와 코인 조회
+- `POST /api/v1/economy/generate`: 에너지 1을 소비해 빈 슬롯에 아이템 생성
+- `POST /api/v1/economy/daily-reward`: UTC 날짜 기준 하루 한 번 코인 50 지급
+
+자세한 규칙은 [5단계 문서](docs/stages/05-economy-and-generator.md)에 있습니다.
 
 > 저장소의 기본 연결 문자열에 있는 `CHANGE_ME`는 문서용 값입니다.
 > 실제 비밀번호를 `appsettings*.json`이나 Git 커밋에 포함하지 마세요.

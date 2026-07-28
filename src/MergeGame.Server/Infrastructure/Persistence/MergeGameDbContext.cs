@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MergeGame.Server.Domain.Boards;
+using MergeGame.Server.Domain.Economy;
 using MergeGame.Server.Domain.Players;
 
 namespace MergeGame.Server.Infrastructure.Persistence;
@@ -24,6 +25,11 @@ public sealed class MergeGameDbContext : DbContext
     /// 보드 슬롯에 배치된 개별 아이템을 조회하고 저장합니다.
     /// </summary>
     public DbSet<BoardItem> BoardItems => Set<BoardItem>();
+
+    /// <summary>
+    /// 플레이어의 에너지, 코인, 보상 이력과 경제 revision을 저장합니다.
+    /// </summary>
+    public DbSet<PlayerEconomy> PlayerEconomies => Set<PlayerEconomy>();
 
     /// <summary>
     /// DI 컨테이너가 구성한 MySQL 연결 옵션을 받아 DbContext를 생성합니다.

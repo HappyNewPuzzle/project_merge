@@ -28,6 +28,7 @@ public static class ServerEndpointExtensions
         app.MapAuthenticationEndpoints();
         app.MapPlayerEndpoints();
         app.MapBoardEndpoints();
+        app.MapEconomyEndpoints();
 
         return app;
     }

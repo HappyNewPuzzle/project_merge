@@ -141,10 +141,76 @@ public sealed class PlayerBoard
         return BoardMergeResult.Succeeded(targetItem);
     }
 
+    /// <summary>
+    /// 서버 아이템 생성기가 지정한 빈 슬롯에 카탈로그로 검증된 아이템을 추가합니다.
+    /// </summary>
+    public BoardGenerationResult TryAddGeneratedItem(
+        int slotIndex,
+        long expectedRevision,
+        string chainId,
+        int level,
+        IItemCatalog itemCatalog,
+        DateTime updatedAtUtc)
+    {
+        if (expectedRevision != Revision)
+        {
+            return BoardGenerationResult.Failed(BoardGenerationError.StaleRevision);
+        }
+
+        if (!IsValidSlot(slotIndex))
+        {
+            return BoardGenerationResult.Failed(BoardGenerationError.InvalidSlot);
+        }
+
+        if (_items.Any(item => item.SlotIndex == slotIndex))
+        {
+            return BoardGenerationResult.Failed(BoardGenerationError.SlotOccupied);
+        }
+
+        if (!itemCatalog.TryGet(chainId, level, out _))
+        {
+            return BoardGenerationResult.Failed(
+                BoardGenerationError.UnknownItemDefinition);
+        }
+
+        var item = BoardItem.Create(PlayerId, slotIndex, chainId, level);
+        _items.Add(item);
+        Revision++;
+        UpdatedAtUtc = DateTime.SpecifyKind(updatedAtUtc, DateTimeKind.Utc);
+        return BoardGenerationResult.Succeeded(item);
+    }
+
     private static bool IsValidSlot(int slotIndex)
     {
         return slotIndex >= 0 && slotIndex < SlotCount;
     }
+}
+
+/// <summary>
+/// 생성기 아이템 배치가 실패할 수 있는 서버 검증 원인입니다.
+/// </summary>
+public enum BoardGenerationError
+{
+    None,
+    StaleRevision,
+    InvalidSlot,
+    SlotOccupied,
+    UnknownItemDefinition
+}
+
+/// <summary>
+/// 생성기 아이템 배치 결과입니다.
+/// </summary>
+public sealed record BoardGenerationResult(
+    bool Success,
+    BoardGenerationError Error,
+    BoardItem? GeneratedItem)
+{
+    public static BoardGenerationResult Succeeded(BoardItem item) =>
+        new(true, BoardGenerationError.None, item);
+
+    public static BoardGenerationResult Failed(BoardGenerationError error) =>
+        new(false, error, null);
 }
 
 /// <summary>

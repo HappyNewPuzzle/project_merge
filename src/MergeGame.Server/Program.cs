@@ -1,5 +1,6 @@
 using MergeGame.Server.Application.Authentication;
 using MergeGame.Server.Application.Boards;
+using MergeGame.Server.Application.Economy;
 using MergeGame.Server.Application.Players;
 using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Endpoints;
@@ -34,6 +35,10 @@ builder.Services.AddScoped<GetPlayerProfileService>();
 builder.Services.AddScoped<InitializePlayerBoardService>();
 builder.Services.AddScoped<GetPlayerBoardService>();
 builder.Services.AddScoped<MergeBoardItemsService>();
+builder.Services.AddScoped<InitializeEconomyService>();
+builder.Services.AddScoped<GetEconomyService>();
+builder.Services.AddScoped<ClaimDailyRewardService>();
+builder.Services.AddScoped<GenerateBoardItemService>();
 builder.Services.AddSingleton<IGuestCredentialGenerator, GuestCredentialGenerator>();
 builder.Services.AddSingleton<IItemCatalog, InMemoryItemCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
