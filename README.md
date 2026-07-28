@@ -14,6 +14,7 @@
 - [1단계: 서버 및 MySQL 기반 구성](docs/stages/01-server-foundation.md)
 - [2단계: 플레이어 모델 및 게스트 계정 생성](docs/stages/02-guest-player.md)
 - [3단계: 게스트 로그인 및 JWT 인증](docs/stages/03-guest-authentication.md)
+- [4단계: 플레이어 보드 및 서버 검증 머지](docs/stages/04-board-and-merge.md)
 
 ## 빠른 실행
 
@@ -41,6 +42,15 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 자세한 요청과 응답 형식은 [3단계 문서](docs/stages/03-guest-authentication.md)를
 참고하세요.
+
+## 머지 보드 API
+
+- `POST /api/v1/board/`: 인증 플레이어의 5×7 보드 최초 생성
+- `GET /api/v1/board/`: 현재 보드와 revision 조회
+- `POST /api/v1/board/merge`: 두 슬롯의 서버 검증 머지
+
+모든 보드 API는 Bearer JWT가 필요합니다. 변경 요청에는 마지막으로 받은 `revision`을
+보내야 하며, 자세한 규칙은 [4단계 문서](docs/stages/04-board-and-merge.md)에 있습니다.
 
 > 저장소의 기본 연결 문자열에 있는 `CHANGE_ME`는 문서용 값입니다.
 > 실제 비밀번호를 `appsettings*.json`이나 Git 커밋에 포함하지 마세요.

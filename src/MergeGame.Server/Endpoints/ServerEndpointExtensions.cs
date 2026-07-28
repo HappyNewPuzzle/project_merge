@@ -27,6 +27,7 @@ public static class ServerEndpointExtensions
         // 기능별 라우트를 분리하면 엔드포인트 수가 늘어도 공통 매핑 코드가 복잡해지지 않습니다.
         app.MapAuthenticationEndpoints();
         app.MapPlayerEndpoints();
+        app.MapBoardEndpoints();
 
         return app;
     }

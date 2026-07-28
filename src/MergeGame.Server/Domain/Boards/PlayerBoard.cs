@@ -1,0 +1,181 @@
+namespace MergeGame.Server.Domain.Boards;
+
+/// <summary>
+/// 한 플레이어가 소유한 5×7 머지 보드와 모든 아이템을 관리하는 애그리게이트 루트입니다.
+/// 머지 규칙과 revision 변경을 한곳에서 처리해 부분 업데이트를 방지합니다.
+/// </summary>
+public sealed class PlayerBoard
+{
+    /// <summary>
+    /// 보드의 가로 슬롯 수입니다.
+    /// </summary>
+    public const int Width = 5;
+
+    /// <summary>
+    /// 보드의 세로 슬롯 수입니다.
+    /// </summary>
+    public const int Height = 7;
+
+    /// <summary>
+    /// 유효한 슬롯 인덱스 수이며 0부터 34까지 사용합니다.
+    /// </summary>
+    public const int SlotCount = Width * Height;
+
+    private readonly List<BoardItem> _items = [];
+
+    // EF Core가 DB 데이터로 애그리게이트를 복원할 때 사용합니다.
+    private PlayerBoard()
+    {
+    }
+
+    /// <summary>
+    /// 보드 소유 플레이어의 ID이며 동시에 보드의 기본 키입니다.
+    /// </summary>
+    public Guid PlayerId { get; private set; }
+
+    /// <summary>
+    /// 클라이언트와 서버가 같은 보드 상태를 보고 있는지 확인하는 증가 전용 버전입니다.
+    /// EF Core 동시성 토큰으로도 사용되어 동시에 도착한 두 변경 중 하나만 성공합니다.
+    /// </summary>
+    public long Revision { get; private set; }
+
+    /// <summary>
+    /// 보드가 처음 생성된 UTC 시각입니다.
+    /// </summary>
+    public DateTime CreatedAtUtc { get; private set; }
+
+    /// <summary>
+    /// 마지막으로 보드 상태가 바뀐 UTC 시각입니다.
+    /// </summary>
+    public DateTime UpdatedAtUtc { get; private set; }
+
+    /// <summary>
+    /// 외부 코드가 컬렉션을 직접 변경하지 못하도록 읽기 전용으로 노출합니다.
+    /// </summary>
+    public IReadOnlyCollection<BoardItem> Items => _items.AsReadOnly();
+
+    /// <summary>
+    /// 두 개의 1레벨 정원 아이템이 포함된 새 플레이어 보드를 만듭니다.
+    /// </summary>
+    public static PlayerBoard CreateInitial(Guid playerId, DateTime createdAtUtc)
+    {
+        var utcTime = DateTime.SpecifyKind(createdAtUtc, DateTimeKind.Utc);
+        var board = new PlayerBoard
+        {
+            PlayerId = playerId,
+            Revision = 1,
+            CreatedAtUtc = utcTime,
+            UpdatedAtUtc = utcTime
+        };
+
+        // 첫 진입 직후 머지 동작을 학습할 수 있도록 같은 아이템을 인접 슬롯에 배치합니다.
+        board._items.Add(BoardItem.Create(playerId, 0, "garden", 1));
+        board._items.Add(BoardItem.Create(playerId, 1, "garden", 1));
+        return board;
+    }
+
+    /// <summary>
+    /// 두 슬롯의 아이템을 서버 규칙에 따라 머지합니다.
+    /// </summary>
+    public BoardMergeResult TryMerge(
+        int sourceSlot,
+        int targetSlot,
+        long expectedRevision,
+        IItemCatalog itemCatalog,
+        DateTime updatedAtUtc)
+    {
+        if (expectedRevision != Revision)
+        {
+            return BoardMergeResult.Failed(BoardMergeError.StaleRevision);
+        }
+
+        if (!IsValidSlot(sourceSlot) || !IsValidSlot(targetSlot))
+        {
+            return BoardMergeResult.Failed(BoardMergeError.InvalidSlot);
+        }
+
+        if (sourceSlot == targetSlot)
+        {
+            return BoardMergeResult.Failed(BoardMergeError.SameSlot);
+        }
+
+        var sourceItem = _items.SingleOrDefault(item => item.SlotIndex == sourceSlot);
+        var targetItem = _items.SingleOrDefault(item => item.SlotIndex == targetSlot);
+        if (sourceItem is null || targetItem is null)
+        {
+            return BoardMergeResult.Failed(BoardMergeError.EmptySlot);
+        }
+
+        if (!string.Equals(
+                sourceItem.ChainId,
+                targetItem.ChainId,
+                StringComparison.Ordinal)
+            || sourceItem.Level != targetItem.Level)
+        {
+            return BoardMergeResult.Failed(BoardMergeError.ItemsDoNotMatch);
+        }
+
+        if (!itemCatalog.TryGet(
+                targetItem.ChainId,
+                targetItem.Level,
+                out var currentDefinition))
+        {
+            return BoardMergeResult.Failed(BoardMergeError.UnknownItemDefinition);
+        }
+
+        if (currentDefinition.IsMaxLevel
+            || !itemCatalog.TryGetNext(
+                targetItem.ChainId,
+                targetItem.Level,
+                out var nextDefinition))
+        {
+            return BoardMergeResult.Failed(BoardMergeError.MaxLevelReached);
+        }
+
+        // 모든 검증이 끝난 뒤에만 상태를 바꿔 실패한 요청이 보드에 흔적을 남기지 않게 합니다.
+        _items.Remove(sourceItem);
+        targetItem.UpgradeTo(nextDefinition.Level);
+        Revision++;
+        UpdatedAtUtc = DateTime.SpecifyKind(updatedAtUtc, DateTimeKind.Utc);
+
+        return BoardMergeResult.Succeeded(targetItem);
+    }
+
+    private static bool IsValidSlot(int slotIndex)
+    {
+        return slotIndex >= 0 && slotIndex < SlotCount;
+    }
+}
+
+/// <summary>
+/// 보드 머지 시 서버가 구분하는 실패 원인입니다.
+/// </summary>
+public enum BoardMergeError
+{
+    None,
+    StaleRevision,
+    InvalidSlot,
+    SameSlot,
+    EmptySlot,
+    ItemsDoNotMatch,
+    UnknownItemDefinition,
+    MaxLevelReached
+}
+
+/// <summary>
+/// 보드 머지의 성공 아이템 또는 실패 원인을 담습니다.
+/// </summary>
+/// <param name="Success">머지가 적용됐는지 나타냅니다.</param>
+/// <param name="Error">실패 시 구체적인 서버 검증 원인입니다.</param>
+/// <param name="MergedItem">성공 시 레벨이 오른 대상 아이템입니다.</param>
+public sealed record BoardMergeResult(
+    bool Success,
+    BoardMergeError Error,
+    BoardItem? MergedItem)
+{
+    public static BoardMergeResult Succeeded(BoardItem item) =>
+        new(true, BoardMergeError.None, item);
+
+    public static BoardMergeResult Failed(BoardMergeError error) =>
+        new(false, error, null);
+}

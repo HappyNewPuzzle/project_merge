@@ -1,7 +1,10 @@
 using MergeGame.Server.Application.Authentication;
+using MergeGame.Server.Application.Boards;
 using MergeGame.Server.Application.Players;
+using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Endpoints;
 using MergeGame.Server.Infrastructure.Authentication;
+using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Security;
 
@@ -28,7 +31,11 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddScoped<CreateGuestPlayerService>();
 builder.Services.AddScoped<AuthenticateGuestPlayerService>();
 builder.Services.AddScoped<GetPlayerProfileService>();
+builder.Services.AddScoped<InitializePlayerBoardService>();
+builder.Services.AddScoped<GetPlayerBoardService>();
+builder.Services.AddScoped<MergeBoardItemsService>();
 builder.Services.AddSingleton<IGuestCredentialGenerator, GuestCredentialGenerator>();
+builder.Services.AddSingleton<IItemCatalog, InMemoryItemCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 // JWT 검증, 현재 플레이어 식별, 로그인 요청 속도 제한을 한 번에 등록합니다.

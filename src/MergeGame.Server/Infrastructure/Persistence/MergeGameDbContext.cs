@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Players;
 
 namespace MergeGame.Server.Infrastructure.Persistence;
@@ -13,6 +14,16 @@ public sealed class MergeGameDbContext : DbContext
     /// 게임에 가입한 플레이어를 조회하고 저장하는 컬렉션입니다.
     /// </summary>
     public DbSet<Player> Players => Set<Player>();
+
+    /// <summary>
+    /// 플레이어별 머지 보드와 보드 revision을 조회하고 저장합니다.
+    /// </summary>
+    public DbSet<PlayerBoard> PlayerBoards => Set<PlayerBoard>();
+
+    /// <summary>
+    /// 보드 슬롯에 배치된 개별 아이템을 조회하고 저장합니다.
+    /// </summary>
+    public DbSet<BoardItem> BoardItems => Set<BoardItem>();
 
     /// <summary>
     /// DI 컨테이너가 구성한 MySQL 연결 옵션을 받아 DbContext를 생성합니다.
