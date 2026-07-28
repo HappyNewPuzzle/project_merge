@@ -1,0 +1,18 @@
+# .NET 빌드 결과물
+bin/
+obj/
+
+# IDE별 사용자 설정
+.vs/
+.vscode/
+*.user
+*.suo
+
+# 운영체제에서 자동 생성하는 파일
+.DS_Store
+Thumbs.db
+
+# 로컬 환경 파일에는 비밀번호가 포함될 수 있으므로 저장소에 올리지 않습니다.
+.env
+.env.*
+!.env.example
