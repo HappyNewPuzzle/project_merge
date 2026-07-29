@@ -85,6 +85,31 @@ public sealed class PlayerEconomy
     }
 
     /// <summary>
+    /// 검증 완료된 서버 보상을 revision 조건과 함께 코인에 반영합니다.
+    /// </summary>
+    public EconomyActionError TryCreditCoins(
+        long expectedRevision,
+        long amount)
+    {
+        if (expectedRevision != Revision)
+        {
+            return EconomyActionError.StaleRevision;
+        }
+
+        if (amount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amount));
+        }
+
+        checked
+        {
+            Coins += amount;
+        }
+        Revision++;
+        return EconomyActionError.None;
+    }
+
+    /// <summary>
     /// DB 상태를 변경하지 않고 현재 서버 시각 기준으로 보이는 에너지와 다음 충전 시각을 계산합니다.
     /// </summary>
     public EconomySnapshot CreateSnapshot(DateTime nowUtc)

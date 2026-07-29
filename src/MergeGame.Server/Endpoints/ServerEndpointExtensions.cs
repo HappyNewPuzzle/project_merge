@@ -29,6 +29,7 @@ public static class ServerEndpointExtensions
         app.MapPlayerEndpoints();
         app.MapBoardEndpoints();
         app.MapEconomyEndpoints();
+        app.MapQuestEndpoints();
 
         return app;
     }

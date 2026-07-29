@@ -1,4 +1,5 @@
 using MergeGame.Server.Domain.Boards;
+using MergeGame.Server.Domain.Quests;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,12 +40,13 @@ public sealed class MergeBoardItemsService
                 Board: null);
         }
 
+        var occurredAtUtc = _timeProvider.GetUtcNow().UtcDateTime;
         var mergeResult = board.TryMerge(
             sourceSlot,
             targetSlot,
             expectedRevision,
             _itemCatalog,
-            _timeProvider.GetUtcNow().UtcDateTime);
+            occurredAtUtc);
 
         if (!mergeResult.Success)
         {
@@ -56,6 +58,18 @@ public sealed class MergeBoardItemsService
                 mergeResult.Error,
                 BoardStateMapper.Map(board, _itemCatalog));
         }
+
+        // 서버가 성공으로 확정한 머지만 이벤트와 퀘스트에 반영하며 보드 변경과 같은 트랜잭션에 넣습니다.
+        var quest = await _dbContext.PlayerQuests.SingleOrDefaultAsync(
+            value => value.PlayerId == playerId
+                && value.QuestId == PlayerQuest.FirstMergeQuestId,
+            cancellationToken);
+        quest?.RecordSuccessfulMerge(occurredAtUtc);
+        _dbContext.GameplayEvents.Add(GameplayEvent.CreateMerge(
+            playerId,
+            board.Revision,
+            mergeResult.MergedItem!.Level,
+            occurredAtUtc));
 
         try
         {

@@ -79,6 +79,7 @@ public sealed class BoardServicesTests
         var savedItem = Assert.Single(savedBoard.Items);
         Assert.Equal(1, savedItem.SlotIndex);
         Assert.Equal(2, savedItem.Level);
+        Assert.Equal(1, await dbContext.GameplayEvents.CountAsync());
     }
 
     /// <summary>
