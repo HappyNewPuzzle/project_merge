@@ -7,6 +7,7 @@ using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Endpoints;
 using MergeGame.Server.Infrastructure.Authentication;
 using MergeGame.Server.Infrastructure.Items;
+using MergeGame.Server.Infrastructure.Observability;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Security;
 
@@ -54,7 +55,24 @@ builder.Services.AddPlayerAuthentication(builder.Configuration);
 // 데이터베이스 검사는 AddPersistence 내부에서 등록합니다.
 builder.Services.AddHealthChecks();
 
+// 모든 처리되지 않은 예외와 프레임워크 오류를 동일한 ProblemDetails 형식으로 반환합니다.
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        // 클라이언트 오류 문의와 서버 로그를 연결할 수 있도록 모든 오류 응답에 traceId를 포함합니다.
+        context.ProblemDetails.Extensions["traceId"] =
+            context.HttpContext.TraceIdentifier;
+        context.ProblemDetails.Instance = context.HttpContext.Request.Path;
+    };
+});
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 var app = builder.Build();
+
+// 요청 추적 ID를 가장 먼저 확정해 이후 미들웨어와 예외 로그가 같은 식별자를 공유합니다.
+app.UseMiddleware<RequestTraceMiddleware>();
+app.UseExceptionHandler();
 
 // HTTPS 리디렉션을 적용해 로그인 토큰이나 게임 데이터가 평문 HTTP로 전달되는 것을 방지합니다.
 // 로컬 개발에서 HTTP 주소만 사용할 때는 launchSettings.json의 HTTPS 프로필을 사용하면 됩니다.
@@ -66,6 +84,8 @@ app.UseRateLimiter();
 
 // 인증이 Authorization 헤더를 검증해 User를 만든 뒤, 권한 미들웨어가 보호 API 접근을 결정합니다.
 app.UseAuthentication();
+// 인증 결과가 만들어진 뒤 쓰기 요청만 감사 로그로 기록하며 토큰과 요청 본문은 기록하지 않습니다.
+app.UseMiddleware<AuditLoggingMiddleware>();
 app.UseAuthorization();
 
 // 단계별 엔드포인트 매핑을 별도 파일로 분리해 Program.cs를 애플리케이션 조립 역할에 집중시킵니다.

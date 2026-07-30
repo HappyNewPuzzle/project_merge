@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+.git/
+.vs/
+.vscode/
+.dotnet_home/
+.env*
+!.env.example
+!.env.docker.example

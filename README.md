@@ -17,6 +17,7 @@
 - [4단계: 플레이어 보드 및 서버 검증 머지](docs/stages/04-board-and-merge.md)
 - [5단계: 에너지·재화·아이템 생성기](docs/stages/05-economy-and-generator.md)
 - [6단계: 퀘스트·머지 이벤트·멱등 보상](docs/stages/06-quests-and-idempotent-rewards.md)
+- [7단계: 관측성 및 Docker 통합 환경](docs/stages/07-observability-and-docker.md)
 
 ## 빠른 실행
 
@@ -70,6 +71,17 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `POST /api/v1/quests/{questId}/claim`: 멱등성 키로 보상 수령
 
 상세 흐름은 [6단계 문서](docs/stages/06-quests-and-idempotent-rewards.md)에 있습니다.
+
+## Docker 통합 환경
+
+Docker가 실행 중인 개발 PC에서는 다음 명령으로 MySQL, 마이그레이션, 서버 빌드,
+헬스 체크를 순서대로 검증할 수 있습니다.
+
+```powershell
+.\scripts\verify-docker-environment.ps1
+```
+
+운영 로그와 trace ID 규칙은 [7단계 문서](docs/stages/07-observability-and-docker.md)를 참고하세요.
 
 > 저장소의 기본 연결 문자열에 있는 `CHANGE_ME`는 문서용 값입니다.
 > 실제 비밀번호를 `appsettings*.json`이나 Git 커밋에 포함하지 마세요.
