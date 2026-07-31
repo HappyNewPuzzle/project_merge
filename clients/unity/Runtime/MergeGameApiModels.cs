@@ -25,7 +25,11 @@ namespace MergeGame.Client
         public string accessToken = "";
         public string tokenType = "Bearer";
         public string expiresAtUtc = "";
+        public string refreshToken = "";
+        public string refreshTokenExpiresAtUtc = "";
     }
+
+    [Serializable] public sealed class RefreshTokenRequest { public string refreshToken = ""; }
 
     [Serializable] public sealed class CurrentPlayerResponse
     {
@@ -160,3 +164,4 @@ namespace MergeGame.Client
         public string RawBody { get; internal set; } = "";
     }
 }
+    [Serializable] public sealed class EmptyResponse { }

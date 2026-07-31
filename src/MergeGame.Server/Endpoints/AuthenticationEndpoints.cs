@@ -22,6 +22,11 @@ public static class AuthenticationEndpoints
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized)
             .RequireRateLimiting(AuthenticationRateLimitPolicy.Name);
+        group.MapPost("/refresh", RefreshAsync).WithName("RefreshAccessToken")
+            .Produces<GuestLoginResponse>().Produces(StatusCodes.Status401Unauthorized)
+            .RequireRateLimiting(AuthenticationRateLimitPolicy.Name);
+        group.MapPost("/logout", LogoutAsync).WithName("Logout")
+            .Produces(StatusCodes.Status204NoContent).RequireAuthorization();
 
         return app;
     }
@@ -32,6 +37,7 @@ public static class AuthenticationEndpoints
     private static async Task<IResult> LoginGuestAsync(
         GuestLoginRequest request,
         AuthenticateGuestPlayerService service,
+        CreateRefreshSessionService refreshService,
         CancellationToken cancellationToken)
     {
         if (request.PlayerId == Guid.Empty
@@ -54,11 +60,29 @@ public static class AuthenticationEndpoints
             return Results.Unauthorized();
         }
 
+        var refresh = await refreshService.ExecuteAsync(result.PlayerId, cancellationToken);
         return Results.Ok(new GuestLoginResponse(
             result.PlayerId,
             result.AccessToken,
             TokenType: "Bearer",
-            result.ExpiresAtUtc));
+            result.ExpiresAtUtc,
+            refresh.RefreshToken,
+            refresh.ExpiresAtUtc));
+    }
+
+    private static async Task<IResult> RefreshAsync(RefreshTokenRequest request, RotateRefreshTokenService service, CancellationToken token)
+    {
+        var result = await service.ExecuteAsync(request.RefreshToken, token);
+        return result.Status == TokenRotationStatus.Succeeded
+            ? Results.Ok(new GuestLoginResponse(result.Tokens!.PlayerId, result.Tokens.AccessToken, "Bearer",
+                result.Tokens.AccessTokenExpiresAtUtc, result.Tokens.RefreshToken, result.Tokens.RefreshTokenExpiresAtUtc))
+            : Results.Unauthorized();
+    }
+
+    private static async Task<IResult> LogoutAsync(RefreshTokenRequest request, ICurrentPlayerAccessor accessor, RevokeRefreshTokenService service, CancellationToken token)
+    {
+        if (!accessor.TryGetPlayerId(out var playerId)) return Results.Unauthorized();
+        await service.ExecuteAsync(playerId, request.RefreshToken, token); return Results.NoContent();
     }
 }
 
@@ -76,8 +100,14 @@ public sealed record GuestLoginRequest(Guid PlayerId, string GuestToken);
 /// <param name="AccessToken">보호 API 요청에 사용할 JWT입니다.</param>
 /// <param name="TokenType">Authorization 헤더에 사용할 Bearer 형식입니다.</param>
 /// <param name="ExpiresAtUtc">액세스 토큰 만료 UTC 시각입니다.</param>
+/// <param name="RefreshToken">액세스 토큰을 갱신할 때 한 번만 사용할 회전형 토큰입니다.</param>
+/// <param name="RefreshTokenExpiresAtUtc">refresh token 계열의 UTC 만료 시각입니다.</param>
 public sealed record GuestLoginResponse(
     Guid PlayerId,
     string AccessToken,
     string TokenType,
-    DateTime ExpiresAtUtc);
+    DateTime ExpiresAtUtc,
+    string RefreshToken,
+    DateTime RefreshTokenExpiresAtUtc);
+
+public sealed record RefreshTokenRequest(string RefreshToken);

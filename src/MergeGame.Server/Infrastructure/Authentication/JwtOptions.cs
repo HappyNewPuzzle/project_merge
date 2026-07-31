@@ -26,4 +26,6 @@ public sealed class JwtOptions
     /// 액세스 토큰의 유효 시간(분)입니다. 탈취 피해를 제한하도록 짧게 유지합니다.
     /// </summary>
     public int AccessTokenMinutes { get; init; } = 15;
+    /// <summary>회전형 refresh token 계열의 최대 유효 기간(일)입니다.</summary>
+    public int RefreshTokenDays { get; init; } = 30;
 }

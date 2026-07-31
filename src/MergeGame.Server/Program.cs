@@ -36,6 +36,9 @@ builder.Services.AddPersistence(builder.Configuration);
 // 인터페이스를 기준으로 등록해 테스트에서는 실제 난수 생성기 대신 예측 가능한 구현으로 교체할 수 있습니다.
 builder.Services.AddScoped<CreateGuestPlayerService>();
 builder.Services.AddScoped<AuthenticateGuestPlayerService>();
+builder.Services.AddScoped<CreateRefreshSessionService>();
+builder.Services.AddScoped<RotateRefreshTokenService>();
+builder.Services.AddScoped<RevokeRefreshTokenService>();
 builder.Services.AddScoped<GetPlayerProfileService>();
 builder.Services.AddScoped<InitializePlayerBoardService>();
 builder.Services.AddScoped<GetPlayerBoardService>();

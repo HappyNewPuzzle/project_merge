@@ -20,6 +20,7 @@
 - [7단계: 관측성 및 Docker 통합 환경](docs/stages/07-observability-and-docker.md)
 - [8단계: OpenAPI 계약 및 Unity 클라이언트](docs/stages/08-openapi-and-unity-client.md)
 - [9단계: 친구 관계 및 일일 에너지 선물](docs/stages/09-social-friends-and-energy-gifts.md)
+- [10단계: Refresh token 회전 및 로그아웃](docs/stages/10-refresh-token-rotation.md)
 
 ## 빠른 실행
 
@@ -44,6 +45,8 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 - `POST /api/v1/auth/guest`: 플레이어 ID와 게스트 토큰으로 JWT 발급
 - `GET /api/v1/players/me`: `Authorization: Bearer {JWT}`로 현재 플레이어 조회
+- `POST /api/v1/auth/refresh`: refresh token을 새 토큰 쌍으로 한 번만 교환
+- `POST /api/v1/auth/logout`: 현재 refresh token 폐기
 
 자세한 요청과 응답 형식은 [3단계 문서](docs/stages/03-guest-authentication.md)를
 참고하세요.

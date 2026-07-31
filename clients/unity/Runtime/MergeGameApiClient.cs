@@ -32,6 +32,12 @@ namespace MergeGame.Client
         public IEnumerator LoginGuest(GuestLoginRequest body, Action<ApiResult<GuestLoginResponse>> completed) =>
             Send<GuestLoginResponse>(UnityWebRequest.kHttpVerbPOST, "/auth/guest", body, false, completed);
 
+        public IEnumerator RefreshAccessToken(RefreshTokenRequest body, Action<ApiResult<GuestLoginResponse>> completed) =>
+            Send<GuestLoginResponse>(UnityWebRequest.kHttpVerbPOST, "/auth/refresh", body, false, completed);
+
+        public IEnumerator Logout(RefreshTokenRequest body, Action<ApiResult<EmptyResponse>> completed) =>
+            Send<EmptyResponse>(UnityWebRequest.kHttpVerbPOST, "/auth/logout", body, true, completed);
+
         public IEnumerator GetCurrentPlayer(Action<ApiResult<CurrentPlayerResponse>> completed) =>
             Send<CurrentPlayerResponse>(UnityWebRequest.kHttpVerbGET, "/players/me", null, true, completed);
 

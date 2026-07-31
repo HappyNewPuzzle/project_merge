@@ -34,6 +34,7 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
         var requiredPaths = new[]
         {
             "/api/v1/players/guest", "/api/v1/players/me", "/api/v1/auth/guest",
+            "/api/v1/auth/refresh", "/api/v1/auth/logout",
             "/api/v1/board", "/api/v1/board/merge", "/api/v1/economy",
             "/api/v1/economy/generate", "/api/v1/economy/daily-reward",
             "/api/v1/quests", "/api/v1/quests/{questId}/claim",

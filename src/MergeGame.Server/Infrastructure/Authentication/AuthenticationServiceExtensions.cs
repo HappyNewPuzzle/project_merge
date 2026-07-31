@@ -34,6 +34,7 @@ public static class AuthenticationServiceExtensions
         // 발급기와 검증기가 정확히 같은 설정 객체를 사용하도록 단일 인스턴스로 등록합니다.
         services.AddSingleton(jwtOptions);
         services.AddSingleton<IJwtTokenIssuer, JwtTokenIssuer>();
+        services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -108,6 +109,8 @@ public static class AuthenticationServiceExtensions
             throw new InvalidOperationException(
                 "Jwt:AccessTokenMinutes는 1분 이상 60분 이하여야 합니다.");
         }
+        if (options.RefreshTokenDays is < 1 or > 90)
+            throw new InvalidOperationException("Jwt:RefreshTokenDays는 1일 이상 90일 이하여야 합니다.");
     }
 }
 
