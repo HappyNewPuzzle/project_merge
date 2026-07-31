@@ -67,6 +67,19 @@ namespace MergeGame.Client
             Send<QuestRewardResponse>(UnityWebRequest.kHttpVerbPOST,
                 "/quests/" + UnityWebRequest.EscapeURL(questId) + "/claim", body, true, completed);
 
+        public IEnumerator InitializeSocialProfile(Action<ApiResult<SocialProfileSnapshot>> completed) =>
+            Send<SocialProfileSnapshot>(UnityWebRequest.kHttpVerbPOST, "/social/profile", null, true, completed);
+
+        public IEnumerator GetSocialProfile(Action<ApiResult<SocialState>> completed) =>
+            Send<SocialState>(UnityWebRequest.kHttpVerbGET, "/social/profile", null, true, completed);
+
+        public IEnumerator AddFriend(AddFriendRequest body, Action<ApiResult<AddFriendResponse>> completed) =>
+            Send<AddFriendResponse>(UnityWebRequest.kHttpVerbPOST, "/social/friends", body, true, completed);
+
+        public IEnumerator SendFriendEnergyGift(string friendPlayerId, Action<ApiResult<EnergyGiftResponse>> completed) =>
+            Send<EnergyGiftResponse>(UnityWebRequest.kHttpVerbPOST,
+                "/social/friends/" + UnityWebRequest.EscapeURL(friendPlayerId) + "/energy-gift", null, true, completed);
+
         private IEnumerator Send<T>(string method, string path, object body, bool requiresAuthentication,
             Action<ApiResult<T>> completed)
         {

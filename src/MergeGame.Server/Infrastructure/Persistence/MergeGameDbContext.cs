@@ -3,6 +3,7 @@ using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Economy;
 using MergeGame.Server.Domain.Players;
 using MergeGame.Server.Domain.Quests;
+using MergeGame.Server.Domain.Social;
 
 namespace MergeGame.Server.Infrastructure.Persistence;
 
@@ -34,6 +35,9 @@ public sealed class MergeGameDbContext : DbContext
     public DbSet<PlayerQuest> PlayerQuests => Set<PlayerQuest>();
     public DbSet<GameplayEvent> GameplayEvents => Set<GameplayEvent>();
     public DbSet<RewardClaim> RewardClaims => Set<RewardClaim>();
+    public DbSet<PlayerSocialProfile> PlayerSocialProfiles => Set<PlayerSocialProfile>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+    public DbSet<EnergyGift> EnergyGifts => Set<EnergyGift>();
 
     /// <summary>
     /// DI 컨테이너가 구성한 MySQL 연결 옵션을 받아 DbContext를 생성합니다.

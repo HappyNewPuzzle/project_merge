@@ -36,7 +36,9 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             "/api/v1/players/guest", "/api/v1/players/me", "/api/v1/auth/guest",
             "/api/v1/board", "/api/v1/board/merge", "/api/v1/economy",
             "/api/v1/economy/generate", "/api/v1/economy/daily-reward",
-            "/api/v1/quests", "/api/v1/quests/{questId}/claim"
+            "/api/v1/quests", "/api/v1/quests/{questId}/claim",
+            "/api/v1/social/profile", "/api/v1/social/friends",
+            "/api/v1/social/friends/{friendPlayerId}/energy-gift"
         };
 
         foreach (var path in requiredPaths)
@@ -63,6 +65,7 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
 
         var paths = root.GetProperty("paths");
         Assert.True(paths.GetProperty("/api/v1/players/me").GetProperty("get").TryGetProperty("security", out _));
+        Assert.True(paths.GetProperty("/api/v1/social/profile").GetProperty("get").TryGetProperty("security", out _));
         Assert.False(paths.GetProperty("/api/v1/players/guest").GetProperty("post").TryGetProperty("security", out _));
     }
 }

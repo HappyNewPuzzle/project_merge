@@ -3,6 +3,7 @@ using MergeGame.Server.Application.Boards;
 using MergeGame.Server.Application.Economy;
 using MergeGame.Server.Application.Players;
 using MergeGame.Server.Application.Quests;
+using MergeGame.Server.Application.Social;
 using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Endpoints;
 using MergeGame.Server.Infrastructure.Authentication;
@@ -11,6 +12,7 @@ using MergeGame.Server.Infrastructure.Observability;
 using MergeGame.Server.Infrastructure.OpenApi;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Security;
+using MergeGame.Server.Infrastructure.Social;
 
 // WebApplicationBuilder는 설정 파일, 환경 변수, 로깅, DI 컨테이너를 한 번에 준비합니다.
 // 명령줄 인수를 전달해야 --urls 같은 ASP.NET Core 기본 옵션도 정상 동작합니다.
@@ -44,7 +46,12 @@ builder.Services.AddScoped<ClaimDailyRewardService>();
 builder.Services.AddScoped<GenerateBoardItemService>();
 builder.Services.AddScoped<QuestQueryService>();
 builder.Services.AddScoped<ClaimQuestRewardService>();
+builder.Services.AddScoped<InitializeSocialProfileService>();
+builder.Services.AddScoped<GetSocialProfileService>();
+builder.Services.AddScoped<AddFriendService>();
+builder.Services.AddScoped<SendFriendEnergyGiftService>();
 builder.Services.AddSingleton<IGuestCredentialGenerator, GuestCredentialGenerator>();
+builder.Services.AddSingleton<IFriendCodeGenerator, FriendCodeGenerator>();
 builder.Services.AddSingleton<IItemCatalog, InMemoryItemCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
 

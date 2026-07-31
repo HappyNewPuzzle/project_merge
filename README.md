@@ -19,6 +19,7 @@
 - [6단계: 퀘스트·머지 이벤트·멱등 보상](docs/stages/06-quests-and-idempotent-rewards.md)
 - [7단계: 관측성 및 Docker 통합 환경](docs/stages/07-observability-and-docker.md)
 - [8단계: OpenAPI 계약 및 Unity 클라이언트](docs/stages/08-openapi-and-unity-client.md)
+- [9단계: 친구 관계 및 일일 에너지 선물](docs/stages/09-social-friends-and-energy-gifts.md)
 
 ## 빠른 실행
 
@@ -46,6 +47,16 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 자세한 요청과 응답 형식은 [3단계 문서](docs/stages/03-guest-authentication.md)를
 참고하세요.
+
+## 소셜 API
+
+- `POST /api/v1/social/profile`: 친구 코드 최초 생성
+- `GET /api/v1/social/profile`: 내 친구 코드와 친구 목록 조회
+- `POST /api/v1/social/friends`: 친구 코드로 친구 추가
+- `POST /api/v1/social/friends/{friendPlayerId}/energy-gift`: 하루 한 번 에너지 5 선물
+
+친구 관계의 중복 방지와 UTC 날짜별 선물 규칙은
+[9단계 문서](docs/stages/09-social-friends-and-energy-gifts.md)를 참고하세요.
 
 ## 머지 보드 API
 

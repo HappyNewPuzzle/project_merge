@@ -115,6 +115,30 @@ namespace MergeGame.Client
         public string error = "";
     }
 
+    [Serializable] public sealed class SocialProfileSnapshot { public string friendCode = ""; }
+
+    [Serializable] public sealed class FriendSnapshot
+    {
+        public string playerId = "";
+        public string displayName = "";
+        public string friendsSinceUtc = "";
+        public bool energyGiftSentToday;
+    }
+
+    [Serializable] public sealed class SocialState
+    {
+        public string friendCode = "";
+        public FriendSnapshot[] friends = Array.Empty<FriendSnapshot>();
+    }
+
+    [Serializable] public sealed class AddFriendRequest { public string friendCode = ""; }
+    [Serializable] public sealed class AddFriendResponse { public bool alreadyFriends; public string friendPlayerId = ""; }
+    [Serializable] public sealed class EnergyGiftResponse
+    {
+        public bool replayed;
+        public EconomySnapshot recipientEconomy = new EconomySnapshot();
+    }
+
     [Serializable] public sealed class ApiProblem
     {
         public string title = "";
@@ -122,6 +146,7 @@ namespace MergeGame.Client
         public string detail = "";
         public string instance = "";
         public string code = "";
+        public string message = "";
         public string traceId = "";
     }
 

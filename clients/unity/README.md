@@ -26,3 +26,8 @@ private IEnumerator Login(string playerId, string guestToken)
 revision을 다음 요청의 `expected...Revision`에 사용하고, HTTP 409이면 서버 상태를
 다시 조회한 뒤 사용자 동작을 재적용합니다. 게스트 토큰과 JWT는 `PlayerPrefs` 평문이
 아닌 플랫폼 보안 저장소에 보관해야 합니다.
+
+소셜 기능은 로그인 후 `InitializeSocialProfile`을 한 번 호출해 친구 코드를 만들고,
+`GetSocialProfile`, `AddFriend`, `SendFriendEnergyGift` 코루틴을 사용합니다. 선물 성공
+응답에는 친구의 공개 표시용 경제 상태가 포함되며, 같은 UTC 날짜의 재호출은
+`replayed=true`로 멱등 성공합니다.

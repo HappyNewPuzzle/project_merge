@@ -9,6 +9,7 @@ public sealed class PlayerEconomy
     public const int MaxEnergy = 100;
     public const int GeneratorEnergyCost = 1;
     public const int DailyCoinReward = 50;
+    public const int FriendEnergyGiftAmount = 5;
     public static readonly TimeSpan EnergyRechargeInterval = TimeSpan.FromMinutes(5);
 
     private PlayerEconomy()
@@ -109,6 +110,18 @@ public sealed class PlayerEconomy
         return EconomyActionError.None;
     }
 
+    /// <summary>서버 시간을 기준으로 자연 충전을 먼저 반영한 뒤 친구 선물 에너지를 더합니다.</summary>
+    public EconomyActionError TryReceiveFriendEnergy(DateTime nowUtc)
+    {
+        ApplyEnergyRecharge(nowUtc);
+        if (Energy >= MaxEnergy)
+            return EconomyActionError.EnergyAlreadyFull;
+
+        Energy = Math.Min(MaxEnergy, Energy + FriendEnergyGiftAmount);
+        Revision++;
+        return EconomyActionError.None;
+    }
+
     /// <summary>
     /// DB 상태를 변경하지 않고 현재 서버 시각 기준으로 보이는 에너지와 다음 충전 시각을 계산합니다.
     /// </summary>
@@ -171,7 +184,8 @@ public enum EconomyActionError
     None,
     StaleRevision,
     InsufficientEnergy,
-    DailyRewardAlreadyClaimed
+    DailyRewardAlreadyClaimed,
+    EnergyAlreadyFull
 }
 
 public sealed record EconomySnapshot(
