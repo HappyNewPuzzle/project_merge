@@ -20,10 +20,14 @@ public static class PlayerEndpoints
 
         group.MapPost("/guest", CreateGuestAsync)
             .WithName("CreateGuestPlayer")
+            .Produces<CreateGuestPlayerResponse>(StatusCodes.Status201Created)
             .RequireRateLimiting(AuthenticationRateLimitPolicy.Name);
 
         group.MapGet("/me", GetCurrentPlayerAsync)
             .WithName("GetCurrentPlayer")
+            .Produces<CurrentPlayerResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound)
             .RequireAuthorization();
 
         return app;

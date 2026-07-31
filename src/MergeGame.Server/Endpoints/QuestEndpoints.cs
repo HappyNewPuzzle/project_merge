@@ -9,9 +9,18 @@ public static class QuestEndpoints
     public static WebApplication MapQuestEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/v1/quests").WithTags("Quests").RequireAuthorization();
-        group.MapPost("/", InitializeAsync).WithName("InitializeQuests");
-        group.MapGet("/", GetAsync).WithName("GetQuests");
-        group.MapPost("/{questId}/claim", ClaimAsync).WithName("ClaimQuestReward");
+        group.MapPost("/", InitializeAsync).WithName("InitializeQuests")
+            .Produces<Domain.Quests.QuestSnapshot>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
+        group.MapGet("/", GetAsync).WithName("GetQuests")
+            .Produces<Domain.Quests.QuestSnapshot>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
+        group.MapPost("/{questId}/claim", ClaimAsync).WithName("ClaimQuestReward")
+            .Produces<QuestRewardResponse>(StatusCodes.Status200OK)
+            .Produces<QuestRewardResponse>(StatusCodes.Status404NotFound)
+            .Produces<QuestRewardResponse>(StatusCodes.Status409Conflict)
+            .Produces<QuestRewardResponse>(StatusCodes.Status422UnprocessableEntity)
+            .ProducesValidationProblem();
         return app;
     }
 

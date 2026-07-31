@@ -14,10 +14,22 @@ public static class EconomyEndpoints
         var group = app.MapGroup("/api/v1/economy")
             .WithTags("Economy")
             .RequireAuthorization();
-        group.MapPost("/", InitializeAsync).WithName("InitializeEconomy");
-        group.MapGet("/", GetAsync).WithName("GetEconomy");
-        group.MapPost("/generate", GenerateAsync).WithName("GenerateBoardItem");
-        group.MapPost("/daily-reward", ClaimDailyRewardAsync).WithName("ClaimDailyReward");
+        group.MapPost("/", InitializeAsync).WithName("InitializeEconomy")
+            .Produces<EconomySnapshot>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
+        group.MapGet("/", GetAsync).WithName("GetEconomy")
+            .Produces<EconomySnapshot>(StatusCodes.Status200OK)
+            .Produces<EconomyErrorResponse>(StatusCodes.Status404NotFound);
+        group.MapPost("/generate", GenerateAsync).WithName("GenerateBoardItem")
+            .Produces<GenerateItemResponse>(StatusCodes.Status200OK)
+            .Produces<EconomyErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<EconomyErrorResponse>(StatusCodes.Status409Conflict)
+            .Produces<EconomyErrorResponse>(StatusCodes.Status422UnprocessableEntity);
+        group.MapPost("/daily-reward", ClaimDailyRewardAsync).WithName("ClaimDailyReward")
+            .Produces<EconomySnapshot>(StatusCodes.Status200OK)
+            .Produces<EconomyErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<EconomyErrorResponse>(StatusCodes.Status409Conflict)
+            .Produces<EconomyErrorResponse>(StatusCodes.Status422UnprocessableEntity);
         return app;
     }
 

@@ -19,13 +19,22 @@ public static class BoardEndpoints
             .RequireAuthorization();
 
         group.MapPost("/", InitializeBoardAsync)
-            .WithName("InitializeBoard");
+            .WithName("InitializeBoard")
+            .Produces<BoardState>(StatusCodes.Status200OK)
+            .Produces<BoardState>(StatusCodes.Status201Created)
+            .Produces<BoardErrorResponse>(StatusCodes.Status404NotFound);
 
         group.MapGet("/", GetBoardAsync)
-            .WithName("GetBoard");
+            .WithName("GetBoard")
+            .Produces<BoardState>(StatusCodes.Status200OK)
+            .Produces<BoardErrorResponse>(StatusCodes.Status404NotFound);
 
         group.MapPost("/merge", MergeItemsAsync)
-            .WithName("MergeBoardItems");
+            .WithName("MergeBoardItems")
+            .Produces<BoardState>(StatusCodes.Status200OK)
+            .Produces<BoardErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<BoardErrorResponse>(StatusCodes.Status409Conflict)
+            .Produces<BoardErrorResponse>(StatusCodes.Status422UnprocessableEntity);
 
         return app;
     }

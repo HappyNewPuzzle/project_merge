@@ -8,6 +8,7 @@ using MergeGame.Server.Endpoints;
 using MergeGame.Server.Infrastructure.Authentication;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Observability;
+using MergeGame.Server.Infrastructure.OpenApi;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Security;
 
@@ -68,11 +69,25 @@ builder.Services.AddProblemDetails(options =>
 });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+// 실행 중인 엔드포인트 메타데이터와 XML 주석에서 OpenAPI v1 계약을 생성합니다.
+// Unity 클라이언트와 서버가 동일한 요청·응답 구조를 공유하는 기준 문서입니다.
+builder.Services.AddMergeGameOpenApi();
+
 var app = builder.Build();
 
 // 요청 추적 ID를 가장 먼저 확정해 이후 미들웨어와 예외 로그가 같은 식별자를 공유합니다.
 app.UseMiddleware<RequestTraceMiddleware>();
 app.UseExceptionHandler();
+
+// JSON 계약은 도구가 읽는 주소이고 Swagger UI는 개발자가 직접 API를 시험하는 화면입니다.
+// 인증 API의 사용법도 문서에 포함되지만 실제 JWT 값은 서버에 저장되지 않습니다.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Merge Game API v1");
+    options.RoutePrefix = "docs";
+    options.DocumentTitle = "Merge Game API v1";
+});
 
 // HTTPS 리디렉션을 적용해 로그인 토큰이나 게임 데이터가 평문 HTTP로 전달되는 것을 방지합니다.
 // 로컬 개발에서 HTTP 주소만 사용할 때는 launchSettings.json의 HTTPS 프로필을 사용하면 됩니다.

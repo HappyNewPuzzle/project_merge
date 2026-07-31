@@ -18,6 +18,9 @@ public static class AuthenticationEndpoints
 
         group.MapPost("/guest", LoginGuestAsync)
             .WithName("LoginGuest")
+            .Produces<GuestLoginResponse>(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
             .RequireRateLimiting(AuthenticationRateLimitPolicy.Name);
 
         return app;

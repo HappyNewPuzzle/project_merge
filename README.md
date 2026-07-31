@@ -18,6 +18,7 @@
 - [5단계: 에너지·재화·아이템 생성기](docs/stages/05-economy-and-generator.md)
 - [6단계: 퀘스트·머지 이벤트·멱등 보상](docs/stages/06-quests-and-idempotent-rewards.md)
 - [7단계: 관측성 및 Docker 통합 환경](docs/stages/07-observability-and-docker.md)
+- [8단계: OpenAPI 계약 및 Unity 클라이언트](docs/stages/08-openapi-and-unity-client.md)
 
 ## 빠른 실행
 
@@ -82,6 +83,16 @@ Docker가 실행 중인 개발 PC에서는 다음 명령으로 MySQL, 마이그�
 ```
 
 운영 로그와 trace ID 규칙은 [7단계 문서](docs/stages/07-observability-and-docker.md)를 참고하세요.
+
+## API 문서와 Unity 연동
+
+- OpenAPI JSON: `/swagger/v1/swagger.json`
+- Swagger UI: `/docs`
+- Unity 클라이언트: [`clients/unity`](clients/unity)
+
+서버 실행 후 Swagger UI에서 요청·응답 형식과 Bearer 인증을 시험할 수 있습니다.
+Unity 적용 및 revision 충돌 처리 방법은 [8단계 문서](docs/stages/08-openapi-and-unity-client.md)를
+참고하세요.
 
 > 저장소의 기본 연결 문자열에 있는 `CHANGE_ME`는 문서용 값입니다.
 > 실제 비밀번호를 `appsettings*.json`이나 Git 커밋에 포함하지 마세요.

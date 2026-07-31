@@ -22,6 +22,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.29" />
     <!-- EF Core 모델을 MySQL 8용 SQL과 데이터 형식으로 변환하는 공급자입니다. -->
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+    <!-- Minimal API 메타데이터와 XML 주석에서 OpenAPI JSON 및 Swagger UI를 생성합니다. -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
 </Project>
