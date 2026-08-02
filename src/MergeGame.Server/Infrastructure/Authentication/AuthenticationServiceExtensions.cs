@@ -1,6 +1,7 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 
 namespace MergeGame.Server.Infrastructure.Authentication;
@@ -36,6 +37,14 @@ public static class AuthenticationServiceExtensions
         services.AddSingleton<IJwtTokenIssuer, JwtTokenIssuer>();
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
 
+        var adminOptions = configuration.GetSection(AdminApiOptions.SectionName).Get<AdminApiOptions>() ?? new AdminApiOptions();
+        if (adminOptions.Enabled && (Encoding.UTF8.GetByteCount(adminOptions.ApiKey) < 32
+            || adminOptions.ApiKey.StartsWith("CHANGE_ME", StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("활성화된 AdminApi:ApiKey에는 최소 32바이트의 실제 비밀 키가 필요합니다.");
+        if (adminOptions.Enabled && string.IsNullOrWhiteSpace(adminOptions.OperatorId))
+            throw new InvalidOperationException("활성화된 AdminApi:OperatorId가 필요합니다.");
+        services.AddSingleton(adminOptions);
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -55,9 +64,13 @@ public static class AuthenticationServiceExtensions
                     // 분산 서버 간 작은 시각 오차만 허용하고 만료 토큰의 추가 사용 시간을 최소화합니다.
                     ClockSkew = TimeSpan.FromSeconds(30)
                 };
-            });
+            })
+            .AddScheme<AuthenticationSchemeOptions, AdminApiKeyAuthenticationHandler>(
+                AdminApiKeyAuthenticationHandler.SchemeName, _ => { });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options => options.AddPolicy(AdminAuthorizationPolicy.Name, policy =>
+            policy.AddAuthenticationSchemes(AdminApiKeyAuthenticationHandler.SchemeName)
+                .RequireRole(AdminApiKeyAuthenticationHandler.RoleName)));
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentPlayerAccessor, CurrentPlayerAccessor>();
 
@@ -74,6 +87,13 @@ public static class AuthenticationServiceExtensions
                         Window = TimeSpan.FromMinutes(1),
                         QueueLimit = 0,
                         AutoReplenishment = true
+                    }));
+            options.AddPolicy(AdminAuthorizationPolicy.RateLimitName, httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true
                     }));
         });
 
@@ -112,6 +132,12 @@ public static class AuthenticationServiceExtensions
         if (options.RefreshTokenDays is < 1 or > 90)
             throw new InvalidOperationException("Jwt:RefreshTokenDays는 1일 이상 90일 이하여야 합니다.");
     }
+}
+
+public static class AdminAuthorizationPolicy
+{
+    public const string Name = "admin-api";
+    public const string RateLimitName = "admin-api-rate-limit";
 }
 
 /// <summary>

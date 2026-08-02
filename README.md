@@ -22,6 +22,7 @@
 - [9단계: 친구 관계 및 일일 에너지 선물](docs/stages/09-social-friends-and-energy-gifts.md)
 - [10단계: Refresh token 회전 및 로그아웃](docs/stages/10-refresh-token-rotation.md)
 - [11단계: Refresh session 백그라운드 정리](docs/stages/11-refresh-session-cleanup.md)
+- [12단계: 관리자 인증 및 읽기 전용 운영 API](docs/stages/12-admin-read-api.md)
 
 ## 빠른 실행
 
@@ -51,6 +52,16 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 만료·폐기 세션의 보존 기간과 자동 정리 운영 방법은
 [11단계 문서](docs/stages/11-refresh-session-cleanup.md)를 참고하세요.
+
+## 관리자 운영 API
+
+관리자 API는 기본적으로 비활성화되어 있으며 Unity 클라이언트에서 사용하지 않습니다.
+활성화한 운영 환경에서만 `X-Admin-Key`로 다음 읽기 전용 API에 접근합니다.
+
+- `GET /api/v1/admin/overview`: 플레이어·세션·친구·오늘 선물 집계
+- `GET /api/v1/admin/players/{playerId}`: 민감정보가 제외된 플레이어 상태 요약
+
+키 생성과 네트워크 제한은 [12단계 문서](docs/stages/12-admin-read-api.md)를 참고하세요.
 
 자세한 요청과 응답 형식은 [3단계 문서](docs/stages/03-guest-authentication.md)를
 참고하세요.

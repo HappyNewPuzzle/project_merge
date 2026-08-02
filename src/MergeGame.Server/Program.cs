@@ -1,4 +1,5 @@
 using MergeGame.Server.Application.Authentication;
+using MergeGame.Server.Application.Administration;
 using MergeGame.Server.Application.Boards;
 using MergeGame.Server.Application.Economy;
 using MergeGame.Server.Application.Players;
@@ -35,6 +36,8 @@ builder.Services.AddPersistence(builder.Configuration);
 // 게스트 계정 생성 유스케이스와 보안 토큰 생성기를 등록합니다.
 // 인터페이스를 기준으로 등록해 테스트에서는 실제 난수 생성기 대신 예측 가능한 구현으로 교체할 수 있습니다.
 builder.Services.AddScoped<CreateGuestPlayerService>();
+builder.Services.AddScoped<GetAdminOverviewService>();
+builder.Services.AddScoped<GetAdminPlayerSummaryService>();
 builder.Services.AddScoped<AuthenticateGuestPlayerService>();
 builder.Services.AddScoped<CreateRefreshSessionService>();
 builder.Services.AddScoped<RotateRefreshTokenService>();

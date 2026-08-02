@@ -31,6 +31,7 @@ public static class ServerEndpointExtensions
         app.MapEconomyEndpoints();
         app.MapQuestEndpoints();
         app.MapSocialEndpoints();
+        app.MapAdminEndpoints();
 
         return app;
     }

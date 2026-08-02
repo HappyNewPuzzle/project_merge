@@ -39,7 +39,8 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             "/api/v1/economy/generate", "/api/v1/economy/daily-reward",
             "/api/v1/quests", "/api/v1/quests/{questId}/claim",
             "/api/v1/social/profile", "/api/v1/social/friends",
-            "/api/v1/social/friends/{friendPlayerId}/energy-gift"
+            "/api/v1/social/friends/{friendPlayerId}/energy-gift",
+            "/api/v1/admin/overview", "/api/v1/admin/players/{playerId}"
         };
 
         foreach (var path in requiredPaths)
@@ -68,6 +69,21 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
         Assert.True(paths.GetProperty("/api/v1/players/me").GetProperty("get").TryGetProperty("security", out _));
         Assert.True(paths.GetProperty("/api/v1/social/profile").GetProperty("get").TryGetProperty("security", out _));
         Assert.False(paths.GetProperty("/api/v1/players/guest").GetProperty("post").TryGetProperty("security", out _));
+
+        var adminScheme = root.GetProperty("components").GetProperty("securitySchemes").GetProperty("AdminApiKey");
+        Assert.Equal("apiKey", adminScheme.GetProperty("type").GetString());
+        Assert.Equal("X-Admin-Key", adminScheme.GetProperty("name").GetString());
+        var adminSecurity = paths.GetProperty("/api/v1/admin/overview").GetProperty("get")
+            .GetProperty("security")[0];
+        Assert.True(adminSecurity.TryGetProperty("AdminApiKey", out _));
+        Assert.False(adminSecurity.TryGetProperty("Bearer", out _));
+    }
+
+    [Fact]
+    public async Task AdminApi_WhenDisabledByDefault_ReturnsUnauthorizedWithoutDatabaseAccess()
+    {
+        using var response = await _client.GetAsync("/api/v1/admin/overview");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }
 

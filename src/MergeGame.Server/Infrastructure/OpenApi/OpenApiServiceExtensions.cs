@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using MergeGame.Server.Infrastructure.Authentication;
 
 namespace MergeGame.Server.Infrastructure.OpenApi;
 
@@ -28,7 +29,14 @@ public static class OpenApiServiceExtensions
                 BearerFormat = "JWT",
                 Description = "POST /api/v1/auth/guest에서 발급받은 accessToken을 입력합니다."
             });
-            options.OperationFilter<BearerSecurityOperationFilter>();
+            options.AddSecurityDefinition(AdminApiKeyAuthenticationHandler.SchemeName, new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Header,
+                Name = AdminApiKeyAuthenticationHandler.HeaderName,
+                Description = "운영 비밀 저장소에서 주입한 관리자 API 키입니다. Unity 클라이언트에는 포함하지 않습니다."
+            });
+            options.OperationFilter<ApiSecurityOperationFilter>();
 
             // 이미 작성한 상세 XML 주석을 API 설명과 DTO 스키마 설명에 재사용합니다.
             var xmlPath = Path.Combine(
@@ -45,18 +53,22 @@ public static class OpenApiServiceExtensions
 }
 
 /// <summary>인증이 필요한 작업에만 OpenAPI Bearer 보안 요구사항을 표시합니다.</summary>
-internal sealed class BearerSecurityOperationFilter : IOperationFilter
+internal sealed class ApiSecurityOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var metadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
         var allowsAnonymous = metadata.OfType<IAllowAnonymous>().Any();
-        var requiresAuthorization = metadata.OfType<IAuthorizeData>().Any();
+        var authorization = metadata.OfType<IAuthorizeData>().ToArray();
+        var requiresAuthorization = authorization.Length > 0;
         if (allowsAnonymous || !requiresAuthorization)
         {
             return;
         }
 
+        var securityDefinition = authorization.Any(data => data.Policy == AdminAuthorizationPolicy.Name)
+            ? AdminApiKeyAuthenticationHandler.SchemeName
+            : "Bearer";
         operation.Security =
         [
             new OpenApiSecurityRequirement
@@ -66,7 +78,7 @@ internal sealed class BearerSecurityOperationFilter : IOperationFilter
                     Reference = new OpenApiReference
                     {
                         Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
+                        Id = securityDefinition
                     }
                 }] = Array.Empty<string>()
             }
