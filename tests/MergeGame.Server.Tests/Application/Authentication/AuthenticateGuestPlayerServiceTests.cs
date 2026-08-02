@@ -1,5 +1,6 @@
 using MergeGame.Server.Application.Authentication;
 using MergeGame.Server.Domain.Players;
+using MergeGame.Server.Domain.Administration;
 using MergeGame.Server.Infrastructure.Authentication;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Security;
@@ -70,6 +71,23 @@ public sealed class AuthenticateGuestPlayerServiceTests
 
         Assert.Null(result);
         Assert.Equal(0, tokenIssuer.IssueCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithSuspendedPlayer_ReturnsNullWithoutIssuingJwt()
+    {
+        await using var dbContext = CreateDbContext();
+        var player = CreatePlayer(RawGuestToken);
+        dbContext.Players.Add(player);
+        dbContext.PlayerModerations.Add(PlayerModeration.Create(player.Id, true, "운영 정지", DateTime.UtcNow));
+        await dbContext.SaveChangesAsync();
+        var issuer = new StubJwtTokenIssuer();
+
+        var result = await new AuthenticateGuestPlayerService(dbContext, issuer)
+            .ExecuteAsync(player.Id, RawGuestToken);
+
+        Assert.Null(result);
+        Assert.Equal(0, issuer.IssueCallCount);
     }
 
     private static MergeGameDbContext CreateDbContext()

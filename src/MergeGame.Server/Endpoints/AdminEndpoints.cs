@@ -17,6 +17,9 @@ public static class AdminEndpoints
         group.MapGet("/players/{playerId:guid}", GetPlayerAsync).WithName("GetAdminPlayerSummary")
             .Produces<AdminPlayerSummary>().Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status401Unauthorized).Produces(StatusCodes.Status403Forbidden);
+        group.MapPost("/players/{playerId:guid}/suspension", ChangeSuspensionAsync).WithName("ChangePlayerSuspension")
+            .Produces<SuspensionChangeResponse>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict).Produces(StatusCodes.Status401Unauthorized);
         return app;
     }
 
@@ -36,4 +39,25 @@ public static class AdminEndpoints
             context.User.FindFirstValue(ClaimTypes.NameIdentifier), playerId, result is not null);
         return result is null ? Results.NotFound() : Results.Ok(result);
     }
+
+    private static async Task<IResult> ChangeSuspensionAsync(Guid playerId, ChangeSuspensionRequest request,
+        HttpContext context, ChangePlayerSuspensionService service, CancellationToken token)
+    {
+        var reason = request.Reason?.Trim() ?? ""; var key = request.IdempotencyKey?.Trim() ?? "";
+        if (reason.Length is < 3 or > 256 || key.Length is < 8 or > 64)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            { ["request"] = ["reason은 3~256자, idempotencyKey는 8~64자여야 합니다."] });
+        var operatorId = context.User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await service.ExecuteAsync(playerId, operatorId, key, request.Suspended, reason, request.ExpectedRevision, token);
+        var response = new SuspensionChangeResponse(result.Status == SuspensionChangeStatus.Replayed, result.IsSuspended, result.Revision);
+        return result.Status switch
+        {
+            SuspensionChangeStatus.Succeeded or SuspensionChangeStatus.Replayed => Results.Ok(response),
+            SuspensionChangeStatus.NotFound => Results.NotFound(),
+            _ => Results.Conflict(response)
+        };
+    }
 }
+
+public sealed record ChangeSuspensionRequest(bool Suspended, string Reason, string IdempotencyKey, long ExpectedRevision);
+public sealed record SuspensionChangeResponse(bool Replayed, bool IsSuspended, long Revision);

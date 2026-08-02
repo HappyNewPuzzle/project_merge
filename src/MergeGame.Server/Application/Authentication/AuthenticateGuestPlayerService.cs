@@ -55,6 +55,11 @@ public sealed class AuthenticateGuestPlayerService
             return null;
         }
 
+        // 정지된 계정에는 새 JWT와 refresh session이 발급되지 않도록 로그인 단계에서 차단합니다.
+        if (await _dbContext.PlayerModerations.AsNoTracking()
+            .AnyAsync(moderation => moderation.PlayerId == playerId && moderation.IsSuspended, cancellationToken))
+            return null;
+
         var accessToken = _tokenIssuer.Issue(player.Id);
         return new GuestAuthenticationResult(
             player.Id,

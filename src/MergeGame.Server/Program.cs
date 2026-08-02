@@ -38,6 +38,7 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddScoped<CreateGuestPlayerService>();
 builder.Services.AddScoped<GetAdminOverviewService>();
 builder.Services.AddScoped<GetAdminPlayerSummaryService>();
+builder.Services.AddScoped<ChangePlayerSuspensionService>();
 builder.Services.AddScoped<AuthenticateGuestPlayerService>();
 builder.Services.AddScoped<CreateRefreshSessionService>();
 builder.Services.AddScoped<RotateRefreshTokenService>();
@@ -114,6 +115,8 @@ app.UseRateLimiter();
 
 // 인증이 Authorization 헤더를 검증해 User를 만든 뒤, 권한 미들웨어가 보호 API 접근을 결정합니다.
 app.UseAuthentication();
+// 관리자 정지는 이미 발급된 JWT에도 즉시 적용하며 관리자 키 인증 요청에는 영향을 주지 않습니다.
+app.UseMiddleware<SuspendedPlayerMiddleware>();
 // 인증 결과가 만들어진 뒤 쓰기 요청만 감사 로그로 기록하며 토큰과 요청 본문은 기록하지 않습니다.
 app.UseMiddleware<AuditLoggingMiddleware>();
 app.UseAuthorization();

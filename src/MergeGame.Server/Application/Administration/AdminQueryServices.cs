@@ -20,8 +20,10 @@ public sealed class GetAdminPlayerSummaryService
         var now = _time.GetUtcNow().UtcDateTime;
         var activeSessions = await _db.RefreshTokenSessions.CountAsync(x => x.PlayerId == playerId
             && x.RevokedAtUtc == null && x.ExpiresAtUtc > now, token);
+        var moderation = await _db.PlayerModerations.AsNoTracking().SingleOrDefaultAsync(x => x.PlayerId == playerId, token);
         return new AdminPlayerSummary(player.Id, player.DisplayName, player.CreatedAtUtc,
-            economy?.Energy, economy?.Coins, economy?.Revision, board?.Revision, itemCount, friendCount, activeSessions);
+            economy?.Energy, economy?.Coins, economy?.Revision, board?.Revision, itemCount, friendCount, activeSessions,
+            moderation?.IsSuspended ?? false, moderation?.Reason, moderation?.Revision ?? 0);
     }
 }
 
@@ -44,6 +46,6 @@ public sealed class GetAdminOverviewService
 
 public sealed record AdminPlayerSummary(Guid PlayerId, string DisplayName, DateTime CreatedAtUtc,
     int? Energy, long? Coins, long? EconomyRevision, long? BoardRevision, int BoardItemCount,
-    int FriendCount, int ActiveRefreshSessionCount);
+    int FriendCount, int ActiveRefreshSessionCount, bool IsSuspended, string? SuspensionReason, long ModerationRevision);
 public sealed record AdminOverview(int PlayerCount, int ActiveRefreshSessionCount, int FriendshipCount,
     int EnergyGiftsSentToday, DateTime ServerTimeUtc);

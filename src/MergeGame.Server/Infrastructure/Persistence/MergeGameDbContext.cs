@@ -5,6 +5,7 @@ using MergeGame.Server.Domain.Players;
 using MergeGame.Server.Domain.Quests;
 using MergeGame.Server.Domain.Social;
 using MergeGame.Server.Domain.Authentication;
+using MergeGame.Server.Domain.Administration;
 
 namespace MergeGame.Server.Infrastructure.Persistence;
 
@@ -40,6 +41,8 @@ public sealed class MergeGameDbContext : DbContext
     public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<EnergyGift> EnergyGifts => Set<EnergyGift>();
     public DbSet<RefreshTokenSession> RefreshTokenSessions => Set<RefreshTokenSession>();
+    public DbSet<PlayerModeration> PlayerModerations => Set<PlayerModeration>();
+    public DbSet<AdminActionAudit> AdminActionAudits => Set<AdminActionAudit>();
 
     /// <summary>
     /// DI 컨테이너가 구성한 MySQL 연결 옵션을 받아 DbContext를 생성합니다.
