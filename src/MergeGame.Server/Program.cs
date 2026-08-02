@@ -61,6 +61,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 // JWT 검증, 현재 플레이어 식별, 로그인 요청 속도 제한을 한 번에 등록합니다.
 // 서명 키가 누락되거나 안전하지 않으면 등록 시 즉시 실패해 잘못된 인증 서버가 실행되지 않게 합니다.
 builder.Services.AddPlayerAuthentication(builder.Configuration);
+// 만료·폐기 refresh session을 보존 정책에 따라 작은 배치로 정리합니다.
+builder.Services.AddRefreshSessionCleanup(builder.Configuration);
 
 // 헬스 체크는 서버 프로세스와 MySQL 연결 상태를 외부 모니터링 시스템에 알려 줍니다.
 // 데이터베이스 검사는 AddPersistence 내부에서 등록합니다.

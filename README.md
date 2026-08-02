@@ -21,6 +21,7 @@
 - [8단계: OpenAPI 계약 및 Unity 클라이언트](docs/stages/08-openapi-and-unity-client.md)
 - [9단계: 친구 관계 및 일일 에너지 선물](docs/stages/09-social-friends-and-energy-gifts.md)
 - [10단계: Refresh token 회전 및 로그아웃](docs/stages/10-refresh-token-rotation.md)
+- [11단계: Refresh session 백그라운드 정리](docs/stages/11-refresh-session-cleanup.md)
 
 ## 빠른 실행
 
@@ -47,6 +48,9 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `GET /api/v1/players/me`: `Authorization: Bearer {JWT}`로 현재 플레이어 조회
 - `POST /api/v1/auth/refresh`: refresh token을 새 토큰 쌍으로 한 번만 교환
 - `POST /api/v1/auth/logout`: 현재 refresh token 폐기
+
+만료·폐기 세션의 보존 기간과 자동 정리 운영 방법은
+[11단계 문서](docs/stages/11-refresh-session-cleanup.md)를 참고하세요.
 
 자세한 요청과 응답 형식은 [3단계 문서](docs/stages/03-guest-authentication.md)를
 참고하세요.
