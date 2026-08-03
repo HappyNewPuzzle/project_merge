@@ -39,6 +39,7 @@ builder.Services.AddScoped<CreateGuestPlayerService>();
 builder.Services.AddScoped<GetAdminOverviewService>();
 builder.Services.AddScoped<GetAdminPlayerSummaryService>();
 builder.Services.AddScoped<ChangePlayerSuspensionService>();
+builder.Services.AddScoped<AdjustPlayerCoinsService>();
 builder.Services.AddScoped<AuthenticateGuestPlayerService>();
 builder.Services.AddScoped<CreateRefreshSessionService>();
 builder.Services.AddScoped<RotateRefreshTokenService>();

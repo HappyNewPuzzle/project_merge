@@ -43,6 +43,8 @@ public static class AuthenticationServiceExtensions
             throw new InvalidOperationException("활성화된 AdminApi:ApiKey에는 최소 32바이트의 실제 비밀 키가 필요합니다.");
         if (adminOptions.Enabled && string.IsNullOrWhiteSpace(adminOptions.OperatorId))
             throw new InvalidOperationException("활성화된 AdminApi:OperatorId가 필요합니다.");
+        if (adminOptions.MaxAbsoluteCoinAdjustment is < 1 or > 1_000_000)
+            throw new InvalidOperationException("AdminApi:MaxAbsoluteCoinAdjustment는 1~1,000,000이어야 합니다.");
         services.AddSingleton(adminOptions);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

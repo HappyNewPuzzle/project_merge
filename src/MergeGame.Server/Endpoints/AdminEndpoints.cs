@@ -20,6 +20,9 @@ public static class AdminEndpoints
         group.MapPost("/players/{playerId:guid}/suspension", ChangeSuspensionAsync).WithName("ChangePlayerSuspension")
             .Produces<SuspensionChangeResponse>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status409Conflict).Produces(StatusCodes.Status401Unauthorized);
+        group.MapPost("/players/{playerId:guid}/coins/adjust", AdjustCoinsAsync).WithName("AdjustPlayerCoins")
+            .Produces<CoinAdjustmentResponse>().ProducesValidationProblem().Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict).Produces(StatusCodes.Status422UnprocessableEntity);
         return app;
     }
 
@@ -57,7 +60,28 @@ public static class AdminEndpoints
             _ => Results.Conflict(response)
         };
     }
+
+    private static async Task<IResult> AdjustCoinsAsync(Guid playerId, AdjustCoinsRequest request, HttpContext context,
+        AdjustPlayerCoinsService service, CancellationToken token)
+    {
+        var reason = request.Reason?.Trim() ?? ""; var key = request.IdempotencyKey?.Trim() ?? "";
+        if (reason.Length is < 3 or > 256 || key.Length is < 8 or > 64 || request.Amount == 0)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            { ["request"] = ["amount는 0이 아니어야 하고 reason은 3~256자, idempotencyKey는 8~64자여야 합니다."] });
+        var result = await service.ExecuteAsync(playerId,
+            context.User.FindFirstValue(ClaimTypes.NameIdentifier)!, key, request.Amount, reason, request.ExpectedEconomyRevision, token);
+        var response = new CoinAdjustmentResponse(result.Status == CoinAdjustmentStatus.Replayed, result.Coins, result.EconomyRevision);
+        return result.Status switch
+        {
+            CoinAdjustmentStatus.Succeeded or CoinAdjustmentStatus.Replayed => Results.Ok(response),
+            CoinAdjustmentStatus.NotFound => Results.NotFound(),
+            CoinAdjustmentStatus.Conflict or CoinAdjustmentStatus.IdempotencyConflict => Results.Conflict(response),
+            _ => Results.UnprocessableEntity(response)
+        };
+    }
 }
 
 public sealed record ChangeSuspensionRequest(bool Suspended, string Reason, string IdempotencyKey, long ExpectedRevision);
 public sealed record SuspensionChangeResponse(bool Replayed, bool IsSuspended, long Revision);
+public sealed record AdjustCoinsRequest(long Amount, string Reason, string IdempotencyKey, long ExpectedEconomyRevision);
+public sealed record CoinAdjustmentResponse(bool Replayed, long Coins, long EconomyRevision);

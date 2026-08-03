@@ -110,6 +110,19 @@ public sealed class PlayerEconomy
         return EconomyActionError.None;
     }
 
+    /// <summary>관리자 조정에서 revision, 0이 아닌 증감량, 음수 잔액과 정수 범위를 검증합니다.</summary>
+    public EconomyActionError TryAdjustCoins(long expectedRevision, long amount)
+    {
+        if (expectedRevision != Revision) return EconomyActionError.StaleRevision;
+        if (amount == 0) return EconomyActionError.InvalidAmount;
+        long adjusted;
+        try { adjusted = checked(Coins + amount); }
+        catch (OverflowException) { return EconomyActionError.BalanceOverflow; }
+        if (adjusted < 0) return EconomyActionError.InsufficientCoins;
+        Coins = adjusted; Revision++;
+        return EconomyActionError.None;
+    }
+
     /// <summary>서버 시간을 기준으로 자연 충전을 먼저 반영한 뒤 친구 선물 에너지를 더합니다.</summary>
     public EconomyActionError TryReceiveFriendEnergy(DateTime nowUtc)
     {
@@ -185,7 +198,10 @@ public enum EconomyActionError
     StaleRevision,
     InsufficientEnergy,
     DailyRewardAlreadyClaimed,
-    EnergyAlreadyFull
+    EnergyAlreadyFull,
+    InvalidAmount,
+    InsufficientCoins,
+    BalanceOverflow
 }
 
 public sealed record EconomySnapshot(

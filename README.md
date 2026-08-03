@@ -24,6 +24,7 @@
 - [11단계: Refresh session 백그라운드 정리](docs/stages/11-refresh-session-cleanup.md)
 - [12단계: 관리자 인증 및 읽기 전용 운영 API](docs/stages/12-admin-read-api.md)
 - [13단계: 계정 정지 및 영구 관리자 감사 원장](docs/stages/13-player-suspension-and-admin-audit.md)
+- [14단계: 제한형 관리자 코인 조정](docs/stages/14-admin-coin-adjustment.md)
 
 ## 빠른 실행
 
@@ -62,10 +63,13 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `GET /api/v1/admin/overview`: 플레이어·세션·친구·오늘 선물 집계
 - `GET /api/v1/admin/players/{playerId}`: 민감정보가 제외된 플레이어 상태 요약
 - `POST /api/v1/admin/players/{playerId}/suspension`: revision과 멱등성 키로 계정 정지·해제
+- `POST /api/v1/admin/players/{playerId}/coins/adjust`: 한도·revision·감사 기반 코인 증감
 
 키 생성과 네트워크 제한은 [12단계 문서](docs/stages/12-admin-read-api.md)를 참고하세요.
 정지 집행 범위와 감사 원장 규칙은
 [13단계 문서](docs/stages/13-player-suspension-and-admin-audit.md)를 참고하세요.
+코인 조정 한도와 복구 절차는
+[14단계 문서](docs/stages/14-admin-coin-adjustment.md)를 참고하세요.
 
 자세한 요청과 응답 형식은 [3단계 문서](docs/stages/03-guest-authentication.md)를
 참고하세요.

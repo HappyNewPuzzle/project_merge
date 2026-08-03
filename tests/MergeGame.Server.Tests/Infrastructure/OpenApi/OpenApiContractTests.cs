@@ -41,7 +41,8 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             "/api/v1/social/profile", "/api/v1/social/friends",
             "/api/v1/social/friends/{friendPlayerId}/energy-gift",
             "/api/v1/admin/overview", "/api/v1/admin/players/{playerId}",
-            "/api/v1/admin/players/{playerId}/suspension"
+            "/api/v1/admin/players/{playerId}/suspension",
+            "/api/v1/admin/players/{playerId}/coins/adjust"
         };
 
         foreach (var path in requiredPaths)

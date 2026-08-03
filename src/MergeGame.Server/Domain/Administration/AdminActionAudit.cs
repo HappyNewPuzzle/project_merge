@@ -22,4 +22,13 @@ public sealed class AdminActionAudit
         Action = "player.suspension.changed", BeforeValue = before ? "suspended" : "active",
         AfterValue = after ? "suspended" : "active", Reason = reason, ResultRevision = revision, CreatedAtUtc = nowUtc
     };
+
+    public static AdminActionAudit CreateCoinAdjustment(string operatorId, string key, Guid playerId,
+        long before, long after, string reason, long revision, DateTime nowUtc) => new()
+    {
+        Id = Guid.NewGuid(), OperatorId = operatorId, IdempotencyKey = key, TargetPlayerId = playerId,
+        Action = "player.coins.adjusted", BeforeValue = before.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        AfterValue = after.ToString(System.Globalization.CultureInfo.InvariantCulture), Reason = reason,
+        ResultRevision = revision, CreatedAtUtc = nowUtc
+    };
 }
