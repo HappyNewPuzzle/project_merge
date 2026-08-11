@@ -36,6 +36,7 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             "/api/v1/players/guest", "/api/v1/players/me", "/api/v1/auth/guest",
             "/api/v1/auth/refresh", "/api/v1/auth/logout",
             "/api/v1/board", "/api/v1/board/merge", "/api/v1/economy",
+            "/api/v1/board/generators/{generatorId}/produce",
             "/api/v1/economy/generate", "/api/v1/economy/daily-reward",
             "/api/v1/quests", "/api/v1/quests/{questId}/claim",
             "/api/v1/social/profile", "/api/v1/social/friends",
@@ -54,6 +55,17 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             .GetProperty("content").GetProperty("application/json").GetProperty("schema")
             .GetProperty("$ref").GetString();
         Assert.Equal("#/components/schemas/BoardState", boardSchemaReference);
+
+        var produceOperation = paths.GetProperty("/api/v1/board/generators/{generatorId}/produce")
+            .GetProperty("post");
+        var produceRequestReference = produceOperation.GetProperty("requestBody")
+            .GetProperty("content").GetProperty("application/json").GetProperty("schema")
+            .GetProperty("$ref").GetString();
+        var produceResponseReference = produceOperation.GetProperty("responses").GetProperty("200")
+            .GetProperty("content").GetProperty("application/json").GetProperty("schema")
+            .GetProperty("$ref").GetString();
+        Assert.Equal("#/components/schemas/ProduceGeneratorItemRequest", produceRequestReference);
+        Assert.Equal("#/components/schemas/GeneratorProduceResponse", produceResponseReference);
     }
 
     [Fact]

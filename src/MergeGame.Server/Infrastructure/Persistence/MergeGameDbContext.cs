@@ -6,6 +6,7 @@ using MergeGame.Server.Domain.Quests;
 using MergeGame.Server.Domain.Social;
 using MergeGame.Server.Domain.Authentication;
 using MergeGame.Server.Domain.Administration;
+using MergeGame.Server.Domain.Generators;
 
 namespace MergeGame.Server.Infrastructure.Persistence;
 
@@ -43,6 +44,10 @@ public sealed class MergeGameDbContext : DbContext
     public DbSet<RefreshTokenSession> RefreshTokenSessions => Set<RefreshTokenSession>();
     public DbSet<PlayerModeration> PlayerModerations => Set<PlayerModeration>();
     public DbSet<AdminActionAudit> AdminActionAudits => Set<AdminActionAudit>();
+    /// <summary>플레이어별 서버 권위형 생성기의 충전 상태입니다.</summary>
+    public DbSet<PlayerGenerator> PlayerGenerators => Set<PlayerGenerator>();
+    /// <summary>성공한 생성 요청을 재생하는 멱등 영수증입니다.</summary>
+    public DbSet<GeneratorProductionReceipt> GeneratorProductionReceipts => Set<GeneratorProductionReceipt>();
 
     /// <summary>
     /// DI 컨테이너가 구성한 MySQL 연결 옵션을 받아 DbContext를 생성합니다.

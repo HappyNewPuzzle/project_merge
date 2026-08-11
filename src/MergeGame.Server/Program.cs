@@ -5,7 +5,9 @@ using MergeGame.Server.Application.Economy;
 using MergeGame.Server.Application.Players;
 using MergeGame.Server.Application.Quests;
 using MergeGame.Server.Application.Social;
+using MergeGame.Server.Application.Generators;
 using MergeGame.Server.Domain.Boards;
+using MergeGame.Server.Domain.Generators;
 using MergeGame.Server.Endpoints;
 using MergeGame.Server.Infrastructure.Authentication;
 using MergeGame.Server.Infrastructure.Items;
@@ -14,6 +16,7 @@ using MergeGame.Server.Infrastructure.OpenApi;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Security;
 using MergeGame.Server.Infrastructure.Social;
+using MergeGame.Server.Infrastructure.Generators;
 
 // WebApplicationBuilder는 설정 파일, 환경 변수, 로깅, DI 컨테이너를 한 번에 준비합니다.
 // 명령줄 인수를 전달해야 --urls 같은 ASP.NET Core 기본 옵션도 정상 동작합니다.
@@ -52,6 +55,7 @@ builder.Services.AddScoped<InitializeEconomyService>();
 builder.Services.AddScoped<GetEconomyService>();
 builder.Services.AddScoped<ClaimDailyRewardService>();
 builder.Services.AddScoped<GenerateBoardItemService>();
+builder.Services.AddScoped<ProduceGeneratorItemService>();
 builder.Services.AddScoped<QuestQueryService>();
 builder.Services.AddScoped<ClaimQuestRewardService>();
 builder.Services.AddScoped<InitializeSocialProfileService>();
@@ -61,6 +65,7 @@ builder.Services.AddScoped<SendFriendEnergyGiftService>();
 builder.Services.AddSingleton<IGuestCredentialGenerator, GuestCredentialGenerator>();
 builder.Services.AddSingleton<IFriendCodeGenerator, FriendCodeGenerator>();
 builder.Services.AddSingleton<IItemCatalog, InMemoryItemCatalog>();
+builder.Services.AddSingleton<IGeneratorCatalog, InMemoryGeneratorCatalog>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 // JWT 검증, 현재 플레이어 식별, 로그인 요청 속도 제한을 한 번에 등록합니다.

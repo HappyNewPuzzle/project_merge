@@ -25,6 +25,7 @@
 - [12단계: 관리자 인증 및 읽기 전용 운영 API](docs/stages/12-admin-read-api.md)
 - [13단계: 계정 정지 및 영구 관리자 감사 원장](docs/stages/13-player-suspension-and-admin-audit.md)
 - [14단계: 제한형 관리자 코인 조정](docs/stages/14-admin-coin-adjustment.md)
+- [15단계: 서버 권위형 생성기 API](docs/stages/15-server-authoritative-generator.md)
 
 ## 빠른 실행
 
@@ -89,15 +90,18 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `POST /api/v1/board/`: 인증 플레이어의 5×7 보드 최초 생성
 - `GET /api/v1/board/`: 현재 보드와 revision 조회
 - `POST /api/v1/board/merge`: 두 슬롯의 서버 검증 머지
+- `POST /api/v1/board/generators/{generatorId}/produce`: 서버가 아이템과 빈 슬롯을 결정하는 멱등 생성
 
 모든 보드 API는 Bearer JWT가 필요합니다. 변경 요청에는 마지막으로 받은 `revision`을
 보내야 하며, 자세한 규칙은 [4단계 문서](docs/stages/04-board-and-merge.md)에 있습니다.
+새 Unity 클라이언트의 생성 요청과 재시도 규칙은
+[15단계 문서](docs/stages/15-server-authoritative-generator.md)를 참고하세요.
 
 ## 경제 API
 
 - `POST /api/v1/economy/`: 최대 에너지 100, 코인 0으로 최초 초기화
 - `GET /api/v1/economy/`: 서버 시간 기준 에너지와 코인 조회
-- `POST /api/v1/economy/generate`: 에너지 1을 소비해 빈 슬롯에 아이템 생성
+- `POST /api/v1/economy/generate`: 기존 클라이언트 호환용 슬롯 지정 생성 API
 - `POST /api/v1/economy/daily-reward`: UTC 날짜 기준 하루 한 번 코인 50 지급
 
 자세한 규칙은 [5단계 문서](docs/stages/05-economy-and-generator.md)에 있습니다.
