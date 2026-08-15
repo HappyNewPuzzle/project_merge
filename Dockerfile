@@ -14,7 +14,7 @@ RUN dotnet publish src/MergeGame.Server/MergeGame.Server.csproj \
     --output /app/publish
 
 # 실행 이미지는 SDK와 소스 코드를 제외한 ASP.NET Core 런타임만 포함합니다.
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.29 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.11 AS runtime
 WORKDIR /app
 
 # 권한이 제한된 기본 .NET 사용자로 실행해 컨테이너 침해 시 피해 범위를 줄입니다.
