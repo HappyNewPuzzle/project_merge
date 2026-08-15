@@ -1,0 +1,72 @@
+name: server-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: merge_game_ci
+          MYSQL_USER: merge_game_ci
+          MYSQL_PASSWORD: ci-app-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-root-password --silent"
+          --health-interval=5s --health-timeout=3s --health-retries=20
+    env:
+      ConnectionStrings__MergeGameDatabase: Server=127.0.0.1;Port=3306;Database=merge_game_ci;User=merge_game_ci;Password=ci-app-password
+      Jwt__SigningKey: 8f4d2c7a6b1e9f305d8c4a7e2b6f9130-ci-only-signing-key
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pinned .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore tools and packages
+        run: |
+          dotnet tool restore
+          dotnet restore ProjectMerge.sln --locked-mode
+
+      - name: Release build
+        run: dotnet build ProjectMerge.sln --configuration Release --no-restore
+
+      - name: Automated tests
+        run: dotnet test ProjectMerge.sln --configuration Release --no-build --no-restore --logger trx --results-directory TestResults
+
+      - name: Reject missing EF migration
+        run: dotnet tool run dotnet-ef migrations has-pending-model-changes --project src/MergeGame.Server --startup-project src/MergeGame.Server --configuration Release --no-build
+
+      - name: Apply every migration to MySQL 8
+        run: dotnet tool run dotnet-ef database update --project src/MergeGame.Server --startup-project src/MergeGame.Server --configuration Release --no-build
+
+      - name: Publish server artifact
+        run: dotnet publish src/MergeGame.Server --configuration Release --no-restore --output artifacts/server
+
+      - name: Build runtime container
+        run: docker build --tag mergegame-server:${{ github.sha }} .
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-test-results
+          path: TestResults
+          retention-days: 14

@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- 모든 프로젝트가 검토된 정확한 전이 의존성 버전을 packages.lock.json으로 고정합니다. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>

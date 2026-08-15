@@ -36,6 +36,7 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             "/api/v1/players/guest", "/api/v1/players/me", "/api/v1/auth/guest",
             "/api/v1/auth/refresh", "/api/v1/auth/logout",
             "/api/v1/content/catalog",
+            "/api/v1/version",
             "/api/v1/game/bootstrap",
             "/api/v1/board", "/api/v1/board/merge", "/api/v1/board/actions", "/api/v1/economy",
             "/api/v1/board/generators/{generatorId}/produce",
@@ -49,7 +50,9 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             "/api/v1/social/friends/{friendPlayerId}/energy-gift",
             "/api/v1/admin/overview", "/api/v1/admin/players/{playerId}",
             "/api/v1/admin/players/{playerId}/suspension",
-            "/api/v1/admin/players/{playerId}/coins/adjust"
+            "/api/v1/admin/players/{playerId}/coins/adjust",
+            "/api/v1/admin/approvals/coin-adjustments",
+            "/api/v1/admin/approvals/{approvalId}/approve"
         };
 
         foreach (var path in requiredPaths)

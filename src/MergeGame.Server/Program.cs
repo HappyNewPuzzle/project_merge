@@ -22,6 +22,7 @@ using MergeGame.Server.Infrastructure.Security;
 using MergeGame.Server.Infrastructure.Social;
 using MergeGame.Server.Infrastructure.Generators;
 using MergeGame.Server.Infrastructure.Quests;
+using MergeGame.Server.Infrastructure.Compatibility;
 
 // WebApplicationBuilder는 설정 파일, 환경 변수, 로깅, DI 컨테이너를 한 번에 준비합니다.
 // 명령줄 인수를 전달해야 --urls 같은 ASP.NET Core 기본 옵션도 정상 동작합니다.
@@ -48,6 +49,8 @@ builder.Services.AddScoped<GetAdminOverviewService>();
 builder.Services.AddScoped<GetAdminPlayerSummaryService>();
 builder.Services.AddScoped<ChangePlayerSuspensionService>();
 builder.Services.AddScoped<AdjustPlayerCoinsService>();
+builder.Services.AddScoped<CreateCoinAdjustmentApprovalService>();
+builder.Services.AddScoped<ApproveCoinAdjustmentService>();
 builder.Services.AddScoped<AuthenticateGuestPlayerService>();
 builder.Services.AddScoped<CreateRefreshSessionService>();
 builder.Services.AddScoped<RotateRefreshTokenService>();
@@ -108,12 +111,14 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 // 실행 중인 엔드포인트 메타데이터와 XML 주석에서 OpenAPI v1 계약을 생성합니다.
 // Unity 클라이언트와 서버가 동일한 요청·응답 구조를 공유하는 기준 문서입니다.
 builder.Services.AddMergeGameOpenApi();
+builder.Services.AddClientCompatibility(builder.Configuration);
 
 var app = builder.Build();
 
 // 요청 추적 ID를 가장 먼저 확정해 이후 미들웨어와 예외 로그가 같은 식별자를 공유합니다.
 app.UseMiddleware<RequestTraceMiddleware>();
 app.UseExceptionHandler();
+app.UseMiddleware<ClientCompatibilityMiddleware>();
 
 // JSON 계약은 도구가 읽는 주소이고 Swagger UI는 개발자가 직접 API를 시험하는 화면입니다.
 // 인증 API의 사용법도 문서에 포함되지만 실제 JWT 값은 서버에 저장되지 않습니다.

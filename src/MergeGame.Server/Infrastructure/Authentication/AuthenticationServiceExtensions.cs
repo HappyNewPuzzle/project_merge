@@ -38,13 +38,29 @@ public static class AuthenticationServiceExtensions
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
 
         var adminOptions = configuration.GetSection(AdminApiOptions.SectionName).Get<AdminApiOptions>() ?? new AdminApiOptions();
-        if (adminOptions.Enabled && (Encoding.UTF8.GetByteCount(adminOptions.ApiKey) < 32
+        if (adminOptions.Enabled && adminOptions.Credentials.Count == 0
+            && (Encoding.UTF8.GetByteCount(adminOptions.ApiKey) < 32
             || adminOptions.ApiKey.StartsWith("CHANGE_ME", StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("활성화된 AdminApi:ApiKey에는 최소 32바이트의 실제 비밀 키가 필요합니다.");
         if (adminOptions.Enabled && string.IsNullOrWhiteSpace(adminOptions.OperatorId))
-            throw new InvalidOperationException("활성화된 AdminApi:OperatorId가 필요합니다.");
+        {
+            if (adminOptions.Credentials.Count == 0)
+                throw new InvalidOperationException("활성화된 AdminApi:OperatorId가 필요합니다.");
+        }
+        foreach (var credential in adminOptions.Credentials)
+        {
+            if (string.IsNullOrWhiteSpace(credential.OperatorId)
+                || Encoding.UTF8.GetByteCount(credential.ApiKey) < 32
+                || credential.ApiKey.StartsWith("CHANGE_ME", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("각 AdminApi:Credentials 항목에는 운영자 ID와 최소 32바이트 실제 키가 필요합니다.");
+            if (credential.Roles.Count == 0 || credential.Roles.Any(role => !AdminRoles.All.Contains(role)))
+                throw new InvalidOperationException("관리자 역할은 AdminReader, AdminModerator, AdminEconomy 중 하나 이상이어야 합니다.");
+        }
         if (adminOptions.MaxAbsoluteCoinAdjustment is < 1 or > 1_000_000)
             throw new InvalidOperationException("AdminApi:MaxAbsoluteCoinAdjustment는 1~1,000,000이어야 합니다.");
+        if (adminOptions.RequireTwoPersonApprovalAtOrAbove is < 1
+            || adminOptions.RequireTwoPersonApprovalAtOrAbove > adminOptions.MaxAbsoluteCoinAdjustment)
+            throw new InvalidOperationException("AdminApi:RequireTwoPersonApprovalAtOrAbove는 1~최대 조정 한도 사이여야 합니다.");
         services.AddSingleton(adminOptions);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -73,6 +89,15 @@ public static class AuthenticationServiceExtensions
         services.AddAuthorization(options => options.AddPolicy(AdminAuthorizationPolicy.Name, policy =>
             policy.AddAuthenticationSchemes(AdminApiKeyAuthenticationHandler.SchemeName)
                 .RequireRole(AdminApiKeyAuthenticationHandler.RoleName)));
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(AdminAuthorizationPolicy.ReadName, policy =>
+                policy.AddAuthenticationSchemes(AdminApiKeyAuthenticationHandler.SchemeName).RequireRole(AdminRoles.Reader));
+            options.AddPolicy(AdminAuthorizationPolicy.ModerationName, policy =>
+                policy.AddAuthenticationSchemes(AdminApiKeyAuthenticationHandler.SchemeName).RequireRole(AdminRoles.Moderator));
+            options.AddPolicy(AdminAuthorizationPolicy.EconomyName, policy =>
+                policy.AddAuthenticationSchemes(AdminApiKeyAuthenticationHandler.SchemeName).RequireRole(AdminRoles.Economy));
+        });
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentPlayerAccessor, CurrentPlayerAccessor>();
 
@@ -139,6 +164,9 @@ public static class AuthenticationServiceExtensions
 public static class AdminAuthorizationPolicy
 {
     public const string Name = "admin-api";
+    public const string ReadName = "admin-read";
+    public const string ModerationName = "admin-moderation";
+    public const string EconomyName = "admin-economy";
     public const string RateLimitName = "admin-api-rate-limit";
 }
 

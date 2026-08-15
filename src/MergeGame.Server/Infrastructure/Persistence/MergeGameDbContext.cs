@@ -51,6 +51,7 @@ public sealed class MergeGameDbContext : DbContext
     public DbSet<RefreshTokenSession> RefreshTokenSessions => Set<RefreshTokenSession>();
     public DbSet<PlayerModeration> PlayerModerations => Set<PlayerModeration>();
     public DbSet<AdminActionAudit> AdminActionAudits => Set<AdminActionAudit>();
+    public DbSet<AdminApprovalRequest> AdminApprovalRequests => Set<AdminApprovalRequest>();
     /// <summary>플레이어별 서버 권위형 생성기의 충전 상태입니다.</summary>
     public DbSet<PlayerGenerator> PlayerGenerators => Set<PlayerGenerator>();
     /// <summary>성공한 생성 요청을 재생하는 멱등 영수증입니다.</summary>

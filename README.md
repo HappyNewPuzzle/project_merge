@@ -33,6 +33,7 @@
 - [20단계: 통합 경제 증감 원장](docs/stages/20-economy-ledger.md)
 - [21단계: 일일·주간 다중 퀘스트](docs/stages/21-recurring-quests.md)
 - [22단계: 플레이어 인벤토리와 보관함](docs/stages/22-player-inventory.md)
+- [23단계: 운영 안전장치와 배포 자동화](docs/stages/23-production-operations.md)
 
 ## 빠른 실행
 
@@ -76,12 +77,16 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `GET /api/v1/admin/players/{playerId}`: 민감정보가 제외된 플레이어 상태 요약
 - `POST /api/v1/admin/players/{playerId}/suspension`: revision과 멱등성 키로 계정 정지·해제
 - `POST /api/v1/admin/players/{playerId}/coins/adjust`: 한도·revision·감사 기반 코인 증감
+- `POST /api/v1/admin/approvals/coin-adjustments`: 고액 코인 조정 승인 요청 생성
+- `POST /api/v1/admin/approvals/{approvalId}/approve`: 다른 운영자가 고액 조정을 승인하고 실행
 
 키 생성과 네트워크 제한은 [12단계 문서](docs/stages/12-admin-read-api.md)를 참고하세요.
 정지 집행 범위와 감사 원장 규칙은
 [13단계 문서](docs/stages/13-player-suspension-and-admin-audit.md)를 참고하세요.
 코인 조정 한도와 복구 절차는
 [14단계 문서](docs/stages/14-admin-coin-adjustment.md)를 참고하세요.
+운영자별 역할, 고액 조정 이중 승인과 배포 절차는
+[23단계 문서](docs/stages/23-production-operations.md)를 참고하세요.
 
 자세한 요청과 응답 형식은 [3단계 문서](docs/stages/03-guest-authentication.md)를
 참고하세요.
@@ -159,12 +164,22 @@ Docker가 실행 중인 개발 PC에서는 다음 명령으로 MySQL, 마이그�
 - Swagger UI: `/docs`
 - Unity 클라이언트: [`clients/unity`](clients/unity)
 - 공개 콘텐츠 카탈로그: `GET /api/v1/content/catalog`
+- 공개 서버·클라이언트 호환 버전: `GET /api/v1/version`
 
 서버 실행 후 Swagger UI에서 요청·응답 형식과 Bearer 인증을 시험할 수 있습니다.
 Unity 적용 및 revision 충돌 처리 방법은 [8단계 문서](docs/stages/08-openapi-and-unity-client.md)를
 참고하세요.
 아이템·보드·경제·생성기 규칙의 버전과 ETag 캐시는
 [18단계 문서](docs/stages/18-versioned-content-catalog.md)를 참고하세요.
+
+## 운영 배포
+
+- 로컬 Release 후보 검증: `./scripts/verify-release.ps1`
+- [배포 런북](docs/operations/deployment-runbook.md)
+- [MySQL 백업·복구 런북](docs/operations/mysql-backup-restore.md)
+
+Unity는 보호된 게임 API에 `X-Client-Version`을 전송해야 합니다. 최소 버전 정책과 운영자 권한 분리는
+[23단계 문서](docs/stages/23-production-operations.md)에 정리되어 있습니다.
 
 > 저장소의 기본 연결 문자열에 있는 `CHANGE_ME`는 문서용 값입니다.
 > 실제 비밀번호를 `appsettings*.json`이나 Git 커밋에 포함하지 마세요.
