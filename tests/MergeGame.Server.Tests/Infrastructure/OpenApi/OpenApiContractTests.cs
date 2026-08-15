@@ -39,6 +39,7 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             "/api/v1/game/bootstrap",
             "/api/v1/board", "/api/v1/board/merge", "/api/v1/board/actions", "/api/v1/economy",
             "/api/v1/board/generators/{generatorId}/produce",
+            "/api/v1/board/items/{itemId}/sell",
             "/api/v1/economy/generate", "/api/v1/economy/daily-reward",
             "/api/v1/quests", "/api/v1/quests/{questId}/claim",
             "/api/v1/social/profile", "/api/v1/social/friends",

@@ -29,6 +29,7 @@
 - [16단계: 서버 권위형 보드 이동·교환·머지](docs/stages/16-server-authoritative-board-actions.md)
 - [17단계: 게임 부트스트랩 및 초기 동기화](docs/stages/17-game-bootstrap.md)
 - [18단계: 버전형 서버 콘텐츠 카탈로그](docs/stages/18-versioned-content-catalog.md)
+- [19단계: 서버 권위형 아이템 판매](docs/stages/19-board-item-sales.md)
 
 ## 빠른 실행
 
@@ -99,6 +100,7 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `POST /api/v1/board/merge`: 두 슬롯의 서버 검증 머지
 - `POST /api/v1/board/actions`: 드래그를 이동·머지·교환으로 서버 판정
 - `POST /api/v1/board/generators/{generatorId}/produce`: 서버가 아이템과 빈 슬롯을 결정하는 멱등 생성
+- `POST /api/v1/board/items/{itemId}/sell`: 서버 가격으로 아이템 판매 및 코인 지급
 
 모든 보드 API는 Bearer JWT가 필요합니다. 변경 요청에는 마지막으로 받은 `revision`을
 보내야 하며, 자세한 규칙은 [4단계 문서](docs/stages/04-board-and-merge.md)에 있습니다.
@@ -106,6 +108,7 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 [15단계 문서](docs/stages/15-server-authoritative-generator.md)를 참고하세요.
 통합 드래그 액션의 멱등 처리와 Unity 적용은
 [16단계 문서](docs/stages/16-server-authoritative-board-actions.md)를 참고하세요.
+보드 공간 확보와 판매 원자성은 [19단계 문서](docs/stages/19-board-item-sales.md)를 참고하세요.
 
 ## 경제 API
 

@@ -56,6 +56,7 @@ builder.Services.AddScoped<InitializePlayerBoardService>();
 builder.Services.AddScoped<GetPlayerBoardService>();
 builder.Services.AddScoped<MergeBoardItemsService>();
 builder.Services.AddScoped<ApplyBoardActionService>();
+builder.Services.AddScoped<SellBoardItemService>();
 builder.Services.AddScoped<InitializeEconomyService>();
 builder.Services.AddScoped<GetEconomyService>();
 builder.Services.AddScoped<ClaimDailyRewardService>();

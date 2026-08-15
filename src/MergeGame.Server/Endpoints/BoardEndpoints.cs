@@ -47,6 +47,14 @@ public static class BoardEndpoints
             .Produces<BoardErrorResponse>(StatusCodes.Status409Conflict)
             .Produces<BoardErrorResponse>(StatusCodes.Status422UnprocessableEntity);
 
+        group.MapPost("/items/{itemId:guid}/sell", SellBoardItemAsync)
+            .WithName("SellBoardItem")
+            .Produces<SellBoardItemResponse>(StatusCodes.Status200OK)
+            .Produces<BoardItemSaleErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<BoardItemSaleErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<BoardItemSaleErrorResponse>(StatusCodes.Status409Conflict)
+            .Produces<BoardItemSaleErrorResponse>(StatusCodes.Status422UnprocessableEntity);
+
         group.MapPost("/generators/{generatorId}/produce", ProduceGeneratorItemAsync)
             .WithName("ProduceGeneratorItem")
             .Produces<GeneratorProduceResponse>(StatusCodes.Status200OK)
@@ -56,6 +64,52 @@ public static class BoardEndpoints
             .Produces<GeneratorProduceErrorResponse>(StatusCodes.Status422UnprocessableEntity);
 
         return app;
+    }
+
+    /// <summary>서버 카탈로그 가격으로 아이템을 제거하고 코인을 원자적으로 지급합니다.</summary>
+    private static async Task<IResult> SellBoardItemAsync(
+        Guid itemId,
+        SellBoardItemRequest request,
+        ICurrentPlayerAccessor currentPlayer,
+        SellBoardItemService service,
+        CancellationToken cancellationToken)
+    {
+        if (!currentPlayer.TryGetPlayerId(out var playerId))
+            return Results.Unauthorized();
+
+        var key = request.IdempotencyKey?.Trim() ?? string.Empty;
+        if (key.Length is < 1 or > 64)
+        {
+            return Results.BadRequest(new BoardItemSaleErrorResponse(
+                "invalid_idempotency_key",
+                "idempotencyKey는 1자 이상 64자 이하여야 합니다.",
+                null,
+                null));
+        }
+
+        var result = await service.ExecuteAsync(
+            playerId,
+            itemId,
+            request.ExpectedBoardRevision,
+            request.ExpectedEconomyRevision,
+            key,
+            cancellationToken);
+        if (result.Success)
+            return Results.Ok(result.Response);
+
+        var error = new BoardItemSaleErrorResponse(
+            ToSaleErrorCode(result.Error),
+            ToSaleErrorMessage(result.Error),
+            result.Board,
+            result.Economy);
+        return result.Error switch
+        {
+            BoardItemSaleServiceError.NotInitialized or BoardItemSaleServiceError.ItemNotFound =>
+                Results.NotFound(error),
+            BoardItemSaleServiceError.StaleRevision or BoardItemSaleServiceError.IdempotencyKeyConflict =>
+                Results.Conflict(error),
+            _ => Results.UnprocessableEntity(error)
+        };
     }
 
     /// <summary>드래그한 두 슬롯을 서버 상태에 따라 이동, 머지 또는 교환으로 판정합니다.</summary>
@@ -327,6 +381,26 @@ public static class BoardEndpoints
         BoardActionServiceError.IdempotencyKeyConflict => "같은 idempotencyKey가 다른 슬롯 액션에 사용됐습니다.",
         _ => "보드를 먼저 초기화해야 합니다."
     };
+
+    private static string ToSaleErrorCode(BoardItemSaleServiceError error) => error switch
+    {
+        BoardItemSaleServiceError.StaleRevision => "stale_revision",
+        BoardItemSaleServiceError.ItemNotFound => "item_not_found",
+        BoardItemSaleServiceError.UnknownItemDefinition => "unknown_item_definition",
+        BoardItemSaleServiceError.ItemNotSellable => "item_not_sellable",
+        BoardItemSaleServiceError.IdempotencyKeyConflict => "idempotency_key_conflict",
+        _ => "not_initialized"
+    };
+
+    private static string ToSaleErrorMessage(BoardItemSaleServiceError error) => error switch
+    {
+        BoardItemSaleServiceError.StaleRevision => "보드 또는 경제 상태가 다른 요청에 의해 변경됐습니다.",
+        BoardItemSaleServiceError.ItemNotFound => "보드에서 판매할 아이템을 찾을 수 없습니다.",
+        BoardItemSaleServiceError.UnknownItemDefinition => "서버에 등록되지 않은 아이템입니다.",
+        BoardItemSaleServiceError.ItemNotSellable => "판매할 수 없는 아이템입니다.",
+        BoardItemSaleServiceError.IdempotencyKeyConflict => "같은 idempotencyKey가 다른 아이템 판매에 사용됐습니다.",
+        _ => "보드와 경제 상태를 먼저 초기화해야 합니다."
+    };
 }
 
 /// <summary>
@@ -346,6 +420,19 @@ public sealed record ApplyBoardActionRequest(
     int TargetSlot,
     long ExpectedBoardRevision,
     string IdempotencyKey);
+
+/// <summary>판매 시 클라이언트가 확인한 보드·경제 revision과 멱등 키를 전달합니다.</summary>
+public sealed record SellBoardItemRequest(
+    long ExpectedBoardRevision,
+    long ExpectedEconomyRevision,
+    string IdempotencyKey);
+
+/// <summary>판매 실패 후 동기화할 보드와 경제 상태를 함께 반환합니다.</summary>
+public sealed record BoardItemSaleErrorResponse(
+    string Code,
+    string Message,
+    BoardState? Board,
+    EconomySnapshot? Economy);
 
 /// <summary>
 /// 보드 API 실패 시 안정적인 코드와 최신 동기화 정보를 반환합니다.

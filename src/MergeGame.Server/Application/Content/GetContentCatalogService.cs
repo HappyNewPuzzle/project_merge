@@ -25,7 +25,7 @@ public sealed class GetContentCatalogService
                 group.Key,
                 group.OrderBy(value => value.Level)
                     .Select(value => new ItemCatalogState(
-                        value.Level, value.Name, value.IsMaxLevel))
+                        value.Level, value.Name, value.IsMaxLevel, value.SellPrice))
                     .ToArray()))
             .OrderBy(value => value.ChainId, StringComparer.Ordinal)
             .ToArray();
@@ -67,7 +67,7 @@ public sealed record EconomyRulesState(
     long DailyCoinReward,
     int FriendEnergyGiftAmount);
 public sealed record ItemChainCatalogState(string ChainId, IReadOnlyList<ItemCatalogState> Levels);
-public sealed record ItemCatalogState(int Level, string Name, bool IsMaxLevel);
+public sealed record ItemCatalogState(int Level, string Name, bool IsMaxLevel, long SellPrice);
 public sealed record GeneratorCatalogState(
     string GeneratorId,
     string GeneratedChainId,

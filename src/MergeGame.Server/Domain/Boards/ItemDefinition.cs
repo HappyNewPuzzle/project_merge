@@ -8,8 +8,10 @@ namespace MergeGame.Server.Domain.Boards;
 /// <param name="Level">계열 안에서의 단계이며 1부터 시작합니다.</param>
 /// <param name="Name">화면과 로그에서 사용할 사람이 읽기 쉬운 이름입니다.</param>
 /// <param name="IsMaxLevel">더 이상 머지할 수 없는 마지막 단계인지 나타냅니다.</param>
+/// <param name="SellPrice">판매할 때 서버가 지급하는 코인입니다.</param>
 public sealed record ItemDefinition(
     string ChainId,
     int Level,
     string Name,
-    bool IsMaxLevel);
+    bool IsMaxLevel,
+    long SellPrice);

@@ -32,6 +32,8 @@ public sealed class MergeGameDbContext : DbContext
     public DbSet<BoardItem> BoardItems => Set<BoardItem>();
     /// <summary>성공한 통합 보드 액션의 멱등 응답 영수증입니다.</summary>
     public DbSet<BoardActionReceipt> BoardActionReceipts => Set<BoardActionReceipt>();
+    /// <summary>성공한 아이템 판매의 코인 지급을 재생하는 멱등 영수증입니다.</summary>
+    public DbSet<BoardItemSaleReceipt> BoardItemSaleReceipts => Set<BoardItemSaleReceipt>();
 
     /// <summary>
     /// 플레이어의 에너지, 코인, 보상 이력과 경제 revision을 저장합니다.

@@ -237,6 +237,32 @@ public sealed class PlayerBoard
         return BoardActionResult.Succeeded(BoardActionType.Swapped, sourceItem);
     }
 
+    /// <summary>
+    /// 아이템 인스턴스와 revision을 검증한 뒤 보드에서 제거하고 서버 카탈로그 판매가를 확정합니다.
+    /// 경제 코인 지급은 애플리케이션 서비스가 같은 트랜잭션에서 수행합니다.
+    /// </summary>
+    public BoardSaleResult TrySellItem(
+        Guid itemId,
+        long expectedRevision,
+        IItemCatalog itemCatalog,
+        DateTime updatedAtUtc)
+    {
+        if (expectedRevision != Revision)
+            return BoardSaleResult.Failed(BoardSaleError.StaleRevision);
+        var item = _items.SingleOrDefault(value => value.Id == itemId);
+        if (item is null)
+            return BoardSaleResult.Failed(BoardSaleError.ItemNotFound);
+        if (!itemCatalog.TryGet(item.ChainId, item.Level, out var definition))
+            return BoardSaleResult.Failed(BoardSaleError.UnknownItemDefinition);
+        if (definition.SellPrice <= 0)
+            return BoardSaleResult.Failed(BoardSaleError.ItemNotSellable);
+
+        _items.Remove(item);
+        Revision++;
+        UpdatedAtUtc = DateTime.SpecifyKind(updatedAtUtc, DateTimeKind.Utc);
+        return BoardSaleResult.Succeeded(item, definition.SellPrice);
+    }
+
     private static bool IsValidSlot(int slotIndex)
     {
         return slotIndex >= 0 && slotIndex < SlotCount;
@@ -270,6 +296,28 @@ public sealed record BoardActionResult(
 
     public static BoardActionResult Failed(BoardActionError error) =>
         new(false, null, error, null);
+}
+
+public enum BoardSaleError
+{
+    None,
+    StaleRevision,
+    ItemNotFound,
+    UnknownItemDefinition,
+    ItemNotSellable
+}
+
+/// <summary>판매로 제거된 아이템과 서버가 확정한 코인 가격입니다.</summary>
+public sealed record BoardSaleResult(
+    bool Success,
+    BoardSaleError Error,
+    BoardItem? SoldItem,
+    long SalePrice)
+{
+    public static BoardSaleResult Succeeded(BoardItem item, long salePrice) =>
+        new(true, BoardSaleError.None, item, salePrice);
+    public static BoardSaleResult Failed(BoardSaleError error) =>
+        new(false, error, null, 0);
 }
 
 /// <summary>

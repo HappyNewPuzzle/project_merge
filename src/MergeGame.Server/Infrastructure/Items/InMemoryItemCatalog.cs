@@ -44,11 +44,11 @@ public sealed class InMemoryItemCatalog : IItemCatalog
     {
         var definitions = new[]
         {
-            new ItemDefinition("garden", 1, "Seed Bag", IsMaxLevel: false),
-            new ItemDefinition("garden", 2, "Green Sprout", IsMaxLevel: false),
-            new ItemDefinition("garden", 3, "Flower Pot", IsMaxLevel: false),
-            new ItemDefinition("garden", 4, "Flower Basket", IsMaxLevel: false),
-            new ItemDefinition("garden", 5, "Garden Arch", IsMaxLevel: true)
+            new ItemDefinition("garden", 1, "Seed Bag", IsMaxLevel: false, SellPrice: 5),
+            new ItemDefinition("garden", 2, "Green Sprout", IsMaxLevel: false, SellPrice: 10),
+            new ItemDefinition("garden", 3, "Flower Pot", IsMaxLevel: false, SellPrice: 20),
+            new ItemDefinition("garden", 4, "Flower Basket", IsMaxLevel: false, SellPrice: 40),
+            new ItemDefinition("garden", 5, "Garden Arch", IsMaxLevel: true, SellPrice: 80)
         };
 
         return definitions.ToDictionary(

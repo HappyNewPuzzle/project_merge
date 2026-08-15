@@ -22,6 +22,8 @@ public sealed class GetContentCatalogServiceTests
         var garden = Assert.Single(result.ItemChains);
         Assert.Equal(5, garden.Levels.Count);
         Assert.True(garden.Levels[^1].IsMaxLevel);
+        Assert.Equal(5, garden.Levels[0].SellPrice);
+        Assert.Equal(80, garden.Levels[^1].SellPrice);
         var generator = Assert.Single(result.Generators);
         Assert.Equal(1, generator.EnergyCost);
         Assert.Equal(30, generator.ChargeRecoverySeconds);
