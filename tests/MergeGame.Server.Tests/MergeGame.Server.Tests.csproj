@@ -18,7 +18,7 @@
     <!-- 실제 서버 진입점을 메모리 TestServer로 실행해 OpenAPI HTTP 계약을 검사합니다. -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.29" />
     <!-- 실제 MySQL 없이 서비스의 EF Core 저장 동작을 빠르게 검증합니다. -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.29" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.19" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <!-- 발급된 JWT를 테스트에서 역직렬화하고 실제 HMAC 서명을 검증합니다. -->
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.7.3" />
