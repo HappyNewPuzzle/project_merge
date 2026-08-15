@@ -44,9 +44,7 @@ public sealed class BoardItemConfiguration : IEntityTypeConfiguration<BoardItem>
             .HasColumnName("level")
             .IsRequired();
 
-        // 한 플레이어 보드의 한 슬롯에는 최대 한 아이템만 존재할 수 있습니다.
-        builder.HasIndex(item => new { item.PlayerId, item.SlotIndex })
-            .IsUnique()
-            .HasDatabaseName("ux_board_items_player_slot");
+        // 슬롯 중복 불변식은 PlayerBoard 애그리게이트가 보장하고 보드 revision이 동시 작성을 직렬화합니다.
+        // MySQL 유니크 인덱스는 두 아이템의 슬롯 교환 UPDATE 중 중간 상태를 충돌로 판단하므로 사용하지 않습니다.
     }
 }

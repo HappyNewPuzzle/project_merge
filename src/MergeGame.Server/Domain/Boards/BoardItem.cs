@@ -61,4 +61,13 @@ public sealed class BoardItem
     {
         Level = nextLevel;
     }
+
+    /// <summary>
+    /// 보드 애그리게이트가 모든 슬롯 검증을 끝낸 뒤 아이템 인스턴스의 위치를 변경합니다.
+    /// 외부에서 직접 호출할 수 없으므로 한 슬롯에 두 아이템이 생기는 상태를 만들 수 없습니다.
+    /// </summary>
+    internal void MoveTo(int slotIndex)
+    {
+        SlotIndex = slotIndex;
+    }
 }

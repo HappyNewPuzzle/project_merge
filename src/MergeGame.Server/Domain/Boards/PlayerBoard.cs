@@ -180,10 +180,96 @@ public sealed class PlayerBoard
         return BoardGenerationResult.Succeeded(item);
     }
 
+    /// <summary>
+    /// 한 번의 드래그 요청을 현재 보드 상태에 따라 이동, 머지 또는 교환으로 판정해 적용합니다.
+    /// 클라이언트가 액션 종류를 지정하지 않으므로 조작된 요청으로 머지 규칙을 우회할 수 없습니다.
+    /// </summary>
+    public BoardActionResult TryApplyAction(
+        int sourceSlot,
+        int targetSlot,
+        long expectedRevision,
+        IItemCatalog itemCatalog,
+        DateTime updatedAtUtc)
+    {
+        if (expectedRevision != Revision)
+            return BoardActionResult.Failed(BoardActionError.StaleRevision);
+        if (!IsValidSlot(sourceSlot) || !IsValidSlot(targetSlot))
+            return BoardActionResult.Failed(BoardActionError.InvalidSlot);
+        if (sourceSlot == targetSlot)
+            return BoardActionResult.Failed(BoardActionError.SameSlot);
+
+        var sourceItem = _items.SingleOrDefault(item => item.SlotIndex == sourceSlot);
+        if (sourceItem is null)
+            return BoardActionResult.Failed(BoardActionError.EmptySourceSlot);
+
+        var targetItem = _items.SingleOrDefault(item => item.SlotIndex == targetSlot);
+        var utcNow = DateTime.SpecifyKind(updatedAtUtc, DateTimeKind.Utc);
+        if (targetItem is null)
+        {
+            sourceItem.MoveTo(targetSlot);
+            Revision++;
+            UpdatedAtUtc = utcNow;
+            return BoardActionResult.Succeeded(BoardActionType.Moved, sourceItem);
+        }
+
+        var itemsMatch = string.Equals(sourceItem.ChainId, targetItem.ChainId, StringComparison.Ordinal)
+            && sourceItem.Level == targetItem.Level;
+        if (itemsMatch)
+        {
+            if (!itemCatalog.TryGet(targetItem.ChainId, targetItem.Level, out var currentDefinition))
+                return BoardActionResult.Failed(BoardActionError.UnknownItemDefinition);
+            if (currentDefinition.IsMaxLevel
+                || !itemCatalog.TryGetNext(targetItem.ChainId, targetItem.Level, out var nextDefinition))
+                return BoardActionResult.Failed(BoardActionError.MaxLevelReached);
+
+            _items.Remove(sourceItem);
+            targetItem.UpgradeTo(nextDefinition.Level);
+            Revision++;
+            UpdatedAtUtc = utcNow;
+            return BoardActionResult.Succeeded(BoardActionType.Merged, targetItem);
+        }
+
+        // 서로 다른 아이템은 인스턴스 ID를 유지한 채 위치만 교환합니다.
+        sourceItem.MoveTo(targetSlot);
+        targetItem.MoveTo(sourceSlot);
+        Revision++;
+        UpdatedAtUtc = utcNow;
+        return BoardActionResult.Succeeded(BoardActionType.Swapped, sourceItem);
+    }
+
     private static bool IsValidSlot(int slotIndex)
     {
         return slotIndex >= 0 && slotIndex < SlotCount;
     }
+}
+
+/// <summary>서버가 현재 두 슬롯의 상태를 보고 결정한 실제 보드 액션입니다.</summary>
+public enum BoardActionType { Moved, Merged, Swapped }
+
+/// <summary>통합 보드 액션이 상태를 변경하지 않고 종료되는 구체적인 원인입니다.</summary>
+public enum BoardActionError
+{
+    None,
+    StaleRevision,
+    InvalidSlot,
+    SameSlot,
+    EmptySourceSlot,
+    UnknownItemDefinition,
+    MaxLevelReached
+}
+
+/// <summary>성공한 액션 종류와 애니메이션 기준 아이템을 함께 반환합니다.</summary>
+public sealed record BoardActionResult(
+    bool Success,
+    BoardActionType? Action,
+    BoardActionError Error,
+    BoardItem? ResultItem)
+{
+    public static BoardActionResult Succeeded(BoardActionType action, BoardItem resultItem) =>
+        new(true, action, BoardActionError.None, resultItem);
+
+    public static BoardActionResult Failed(BoardActionError error) =>
+        new(false, null, error, null);
 }
 
 /// <summary>

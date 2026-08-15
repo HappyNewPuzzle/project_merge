@@ -30,6 +30,8 @@ public sealed class MergeGameDbContext : DbContext
     /// 보드 슬롯에 배치된 개별 아이템을 조회하고 저장합니다.
     /// </summary>
     public DbSet<BoardItem> BoardItems => Set<BoardItem>();
+    /// <summary>성공한 통합 보드 액션의 멱등 응답 영수증입니다.</summary>
+    public DbSet<BoardActionReceipt> BoardActionReceipts => Set<BoardActionReceipt>();
 
     /// <summary>
     /// 플레이어의 에너지, 코인, 보상 이력과 경제 revision을 저장합니다.

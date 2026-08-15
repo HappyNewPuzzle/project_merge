@@ -26,6 +26,7 @@
 - [13단계: 계정 정지 및 영구 관리자 감사 원장](docs/stages/13-player-suspension-and-admin-audit.md)
 - [14단계: 제한형 관리자 코인 조정](docs/stages/14-admin-coin-adjustment.md)
 - [15단계: 서버 권위형 생성기 API](docs/stages/15-server-authoritative-generator.md)
+- [16단계: 서버 권위형 보드 이동·교환·머지](docs/stages/16-server-authoritative-board-actions.md)
 
 ## 빠른 실행
 
@@ -90,12 +91,15 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `POST /api/v1/board/`: 인증 플레이어의 5×7 보드 최초 생성
 - `GET /api/v1/board/`: 현재 보드와 revision 조회
 - `POST /api/v1/board/merge`: 두 슬롯의 서버 검증 머지
+- `POST /api/v1/board/actions`: 드래그를 이동·머지·교환으로 서버 판정
 - `POST /api/v1/board/generators/{generatorId}/produce`: 서버가 아이템과 빈 슬롯을 결정하는 멱등 생성
 
 모든 보드 API는 Bearer JWT가 필요합니다. 변경 요청에는 마지막으로 받은 `revision`을
 보내야 하며, 자세한 규칙은 [4단계 문서](docs/stages/04-board-and-merge.md)에 있습니다.
 새 Unity 클라이언트의 생성 요청과 재시도 규칙은
 [15단계 문서](docs/stages/15-server-authoritative-generator.md)를 참고하세요.
+통합 드래그 액션의 멱등 처리와 Unity 적용은
+[16단계 문서](docs/stages/16-server-authoritative-board-actions.md)를 참고하세요.
 
 ## 경제 API
 

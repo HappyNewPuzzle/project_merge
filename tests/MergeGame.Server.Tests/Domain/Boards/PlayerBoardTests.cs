@@ -98,6 +98,49 @@ public sealed class PlayerBoardTests
         Assert.Equal(2, board.Items.Count);
     }
 
+    [Fact]
+    public void TryApplyAction_ToEmptySlot_MovesSameItemInstance()
+    {
+        var board = PlayerBoard.CreateInitial(Guid.NewGuid(), InitialTime);
+        var sourceId = board.Items.Single(value => value.SlotIndex == 0).Id;
+
+        var result = board.TryApplyAction(0, 2, 1, new InMemoryItemCatalog(), InitialTime);
+
+        Assert.True(result.Success);
+        Assert.Equal(BoardActionType.Moved, result.Action);
+        Assert.Equal(sourceId, board.Items.Single(value => value.SlotIndex == 2).Id);
+        Assert.Equal(2, board.Revision);
+    }
+
+    [Fact]
+    public void TryApplyAction_WithMatchingTarget_PerformsMerge()
+    {
+        var board = PlayerBoard.CreateInitial(Guid.NewGuid(), InitialTime);
+
+        var result = board.TryApplyAction(0, 1, 1, new InMemoryItemCatalog(), InitialTime);
+
+        Assert.True(result.Success);
+        Assert.Equal(BoardActionType.Merged, result.Action);
+        Assert.Equal(2, Assert.Single(board.Items).Level);
+    }
+
+    [Fact]
+    public void TryApplyAction_WithDifferentItems_SwapsInstanceSlots()
+    {
+        var board = PlayerBoard.CreateInitial(Guid.NewGuid(), InitialTime);
+        var catalog = new InMemoryItemCatalog();
+        Assert.True(board.TryMerge(0, 1, 1, catalog, InitialTime).Success);
+        Assert.True(board.TryAddGeneratedItem(0, 2, "garden", 1, catalog, InitialTime).Success);
+        var levelOneId = board.Items.Single(value => value.Level == 1).Id;
+        var levelTwoId = board.Items.Single(value => value.Level == 2).Id;
+
+        var result = board.TryApplyAction(0, 1, 3, catalog, InitialTime);
+
+        Assert.Equal(BoardActionType.Swapped, result.Action);
+        Assert.Equal(1, board.Items.Single(value => value.Id == levelOneId).SlotIndex);
+        Assert.Equal(0, board.Items.Single(value => value.Id == levelTwoId).SlotIndex);
+    }
+
     /// <summary>
     /// 초기 아이템을 테스트 목적상 최대 단계로 취급하는 카탈로그 대역입니다.
     /// </summary>

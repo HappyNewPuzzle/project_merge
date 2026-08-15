@@ -39,6 +39,14 @@ public static class BoardEndpoints
             .Produces<BoardErrorResponse>(StatusCodes.Status409Conflict)
             .Produces<BoardErrorResponse>(StatusCodes.Status422UnprocessableEntity);
 
+        group.MapPost("/actions", ApplyBoardActionAsync)
+            .WithName("ApplyBoardAction")
+            .Produces<BoardActionResponse>(StatusCodes.Status200OK)
+            .Produces<BoardErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<BoardErrorResponse>(StatusCodes.Status404NotFound)
+            .Produces<BoardErrorResponse>(StatusCodes.Status409Conflict)
+            .Produces<BoardErrorResponse>(StatusCodes.Status422UnprocessableEntity);
+
         group.MapPost("/generators/{generatorId}/produce", ProduceGeneratorItemAsync)
             .WithName("ProduceGeneratorItem")
             .Produces<GeneratorProduceResponse>(StatusCodes.Status200OK)
@@ -48,6 +56,50 @@ public static class BoardEndpoints
             .Produces<GeneratorProduceErrorResponse>(StatusCodes.Status422UnprocessableEntity);
 
         return app;
+    }
+
+    /// <summary>드래그한 두 슬롯을 서버 상태에 따라 이동, 머지 또는 교환으로 판정합니다.</summary>
+    private static async Task<IResult> ApplyBoardActionAsync(
+        ApplyBoardActionRequest request,
+        ICurrentPlayerAccessor currentPlayer,
+        ApplyBoardActionService service,
+        CancellationToken cancellationToken)
+    {
+        if (!currentPlayer.TryGetPlayerId(out var playerId))
+            return Results.Unauthorized();
+
+        var idempotencyKey = request.IdempotencyKey?.Trim() ?? string.Empty;
+        if (idempotencyKey.Length is < 1 or > 64)
+        {
+            return Results.BadRequest(new BoardErrorResponse(
+                "invalid_idempotency_key",
+                "idempotencyKey는 1자 이상 64자 이하여야 합니다.",
+                null,
+                null));
+        }
+
+        var result = await service.ExecuteAsync(
+            playerId,
+            request.SourceSlot,
+            request.TargetSlot,
+            request.ExpectedBoardRevision,
+            idempotencyKey,
+            cancellationToken);
+        if (result.Success)
+            return Results.Ok(result.Response);
+
+        var response = new BoardErrorResponse(
+            ToBoardActionErrorCode(result.Error),
+            ToBoardActionErrorMessage(result.Error),
+            result.Board?.Revision,
+            result.Board);
+        return result.Error switch
+        {
+            BoardActionServiceError.BoardNotInitialized => Results.NotFound(response),
+            BoardActionServiceError.StaleRevision or BoardActionServiceError.IdempotencyKeyConflict =>
+                Results.Conflict(response),
+            _ => Results.UnprocessableEntity(response)
+        };
     }
 
     /// <summary>
@@ -251,6 +303,30 @@ public static class BoardEndpoints
         GeneratorProduceError.IdempotencyKeyConflict => "같은 idempotencyKey가 다른 생성기 요청에 사용됐습니다.",
         _ => "보드와 경제 상태를 먼저 초기화해야 합니다."
     };
+
+    private static string ToBoardActionErrorCode(BoardActionServiceError error) => error switch
+    {
+        BoardActionServiceError.StaleRevision => "stale_revision",
+        BoardActionServiceError.InvalidSlot => "invalid_slot",
+        BoardActionServiceError.SameSlot => "same_slot",
+        BoardActionServiceError.EmptySourceSlot => "empty_source_slot",
+        BoardActionServiceError.UnknownItemDefinition => "unknown_item_definition",
+        BoardActionServiceError.MaxLevelReached => "max_level_reached",
+        BoardActionServiceError.IdempotencyKeyConflict => "idempotency_key_conflict",
+        _ => "board_not_initialized"
+    };
+
+    private static string ToBoardActionErrorMessage(BoardActionServiceError error) => error switch
+    {
+        BoardActionServiceError.StaleRevision => "보드가 다른 요청에 의해 변경됐습니다.",
+        BoardActionServiceError.InvalidSlot => "슬롯은 0부터 34 사이여야 합니다.",
+        BoardActionServiceError.SameSlot => "서로 다른 두 슬롯을 선택해야 합니다.",
+        BoardActionServiceError.EmptySourceSlot => "원본 슬롯에 이동할 아이템이 없습니다.",
+        BoardActionServiceError.UnknownItemDefinition => "서버에 등록되지 않은 아이템입니다.",
+        BoardActionServiceError.MaxLevelReached => "같은 최대 레벨 아이템은 더 이상 머지할 수 없습니다.",
+        BoardActionServiceError.IdempotencyKeyConflict => "같은 idempotencyKey가 다른 슬롯 액션에 사용됐습니다.",
+        _ => "보드를 먼저 초기화해야 합니다."
+    };
 }
 
 /// <summary>
@@ -263,6 +339,13 @@ public sealed record MergeBoardItemsRequest(
     int SourceSlot,
     int TargetSlot,
     long ExpectedRevision);
+
+/// <summary>클라이언트가 드래그한 두 슬롯과 마지막으로 확인한 revision만 전달합니다.</summary>
+public sealed record ApplyBoardActionRequest(
+    int SourceSlot,
+    int TargetSlot,
+    long ExpectedBoardRevision,
+    string IdempotencyKey);
 
 /// <summary>
 /// 보드 API 실패 시 안정적인 코드와 최신 동기화 정보를 반환합니다.
