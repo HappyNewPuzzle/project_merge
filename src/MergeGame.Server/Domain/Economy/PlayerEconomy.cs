@@ -43,7 +43,8 @@ public sealed class PlayerEconomy
     /// </summary>
     public EconomyActionError TrySpendGeneratorEnergy(
         long expectedRevision,
-        DateTime nowUtc)
+        DateTime nowUtc,
+        int energyCost = GeneratorEnergyCost)
     {
         if (expectedRevision != Revision)
         {
@@ -51,12 +52,14 @@ public sealed class PlayerEconomy
         }
 
         ApplyEnergyRecharge(nowUtc);
-        if (Energy < GeneratorEnergyCost)
+        if (energyCost <= 0)
+            throw new ArgumentOutOfRangeException(nameof(energyCost));
+        if (Energy < energyCost)
         {
             return EconomyActionError.InsufficientEnergy;
         }
 
-        Energy -= GeneratorEnergyCost;
+        Energy -= energyCost;
         Revision++;
         return EconomyActionError.None;
     }

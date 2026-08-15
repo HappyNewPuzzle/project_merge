@@ -28,6 +28,7 @@
 - [15단계: 서버 권위형 생성기 API](docs/stages/15-server-authoritative-generator.md)
 - [16단계: 서버 권위형 보드 이동·교환·머지](docs/stages/16-server-authoritative-board-actions.md)
 - [17단계: 게임 부트스트랩 및 초기 동기화](docs/stages/17-game-bootstrap.md)
+- [18단계: 버전형 서버 콘텐츠 카탈로그](docs/stages/18-versioned-content-catalog.md)
 
 ## 빠른 실행
 
@@ -139,10 +140,13 @@ Docker가 실행 중인 개발 PC에서는 다음 명령으로 MySQL, 마이그�
 - OpenAPI JSON: `/swagger/v1/swagger.json`
 - Swagger UI: `/docs`
 - Unity 클라이언트: [`clients/unity`](clients/unity)
+- 공개 콘텐츠 카탈로그: `GET /api/v1/content/catalog`
 
 서버 실행 후 Swagger UI에서 요청·응답 형식과 Bearer 인증을 시험할 수 있습니다.
 Unity 적용 및 revision 충돌 처리 방법은 [8단계 문서](docs/stages/08-openapi-and-unity-client.md)를
 참고하세요.
+아이템·보드·경제·생성기 규칙의 버전과 ETag 캐시는
+[18단계 문서](docs/stages/18-versioned-content-catalog.md)를 참고하세요.
 
 > 저장소의 기본 연결 문자열에 있는 `CHANGE_ME`는 문서용 값입니다.
 > 실제 비밀번호를 `appsettings*.json`이나 Git 커밋에 포함하지 마세요.

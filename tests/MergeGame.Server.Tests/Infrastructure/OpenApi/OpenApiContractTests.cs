@@ -35,6 +35,7 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
         {
             "/api/v1/players/guest", "/api/v1/players/me", "/api/v1/auth/guest",
             "/api/v1/auth/refresh", "/api/v1/auth/logout",
+            "/api/v1/content/catalog",
             "/api/v1/game/bootstrap",
             "/api/v1/board", "/api/v1/board/merge", "/api/v1/board/actions", "/api/v1/economy",
             "/api/v1/board/generators/{generatorId}/produce",
@@ -84,6 +85,7 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
         Assert.True(paths.GetProperty("/api/v1/players/me").GetProperty("get").TryGetProperty("security", out _));
         Assert.True(paths.GetProperty("/api/v1/social/profile").GetProperty("get").TryGetProperty("security", out _));
         Assert.False(paths.GetProperty("/api/v1/players/guest").GetProperty("post").TryGetProperty("security", out _));
+        Assert.False(paths.GetProperty("/api/v1/content/catalog").GetProperty("get").TryGetProperty("security", out _));
 
         var adminScheme = root.GetProperty("components").GetProperty("securitySchemes").GetProperty("AdminApiKey");
         Assert.Equal("apiKey", adminScheme.GetProperty("type").GetString());
@@ -92,6 +94,20 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             .GetProperty("security")[0];
         Assert.True(adminSecurity.TryGetProperty("AdminApiKey", out _));
         Assert.False(adminSecurity.TryGetProperty("Bearer", out _));
+    }
+
+    [Fact]
+    public async Task ContentCatalog_UsesVersionEtagForPublicCacheRevalidation()
+    {
+        using var first = await _client.GetAsync("/api/v1/content/catalog");
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.NotNull(first.Headers.ETag);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/content/catalog");
+        request.Headers.IfNoneMatch.Add(first.Headers.ETag);
+        using var cached = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.NotModified, cached.StatusCode);
     }
 
     [Fact]

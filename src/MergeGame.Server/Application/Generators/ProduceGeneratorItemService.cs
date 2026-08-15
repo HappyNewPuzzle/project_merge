@@ -99,7 +99,7 @@ public sealed class ProduceGeneratorItemService
         }
 
         // 스냅샷은 자연 회복분까지 계산하므로 실제 소비 전에 실패 조건을 모두 판정할 수 있습니다.
-        if (currentEconomy.Energy < PlayerEconomy.GeneratorEnergyCost)
+        if (currentEconomy.Energy < definition.EnergyCost)
         {
             return GeneratorProduceResult.Failed(
                 GeneratorProduceError.InsufficientEnergy,
@@ -125,7 +125,7 @@ public sealed class ProduceGeneratorItemService
             definition.GeneratedLevel,
             _itemCatalog,
             now);
-        var economyError = economy.TrySpendGeneratorEnergy(expectedEconomyRevision, now);
+        var economyError = economy.TrySpendGeneratorEnergy(expectedEconomyRevision, now, definition.EnergyCost);
         var chargeConsumed = generator.TryConsumeCharge(now, definition);
         if (!boardResult.Success || economyError != EconomyActionError.None || !chargeConsumed)
         {

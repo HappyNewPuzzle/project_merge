@@ -3,6 +3,7 @@ using MergeGame.Server.Application.Players;
 using MergeGame.Server.Application.Social;
 using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Economy;
+using MergeGame.Server.Domain.Content;
 using MergeGame.Server.Domain.Generators;
 using MergeGame.Server.Domain.Quests;
 using MergeGame.Server.Domain.Social;
@@ -18,7 +19,6 @@ namespace MergeGame.Server.Application.Game;
 /// </summary>
 public sealed class GameBootstrapService
 {
-    public const string CurrentContentVersion = "2026.08.15.1";
     private readonly MergeGameDbContext _dbContext;
     private readonly IItemCatalog _itemCatalog;
     private readonly IGeneratorCatalog _generatorCatalog;
@@ -135,7 +135,7 @@ public sealed class GameBootstrapService
 
         return new GameBootstrapResponse(
             DateTime.SpecifyKind(now, DateTimeKind.Utc),
-            CurrentContentVersion,
+            GameContentVersion.Current,
             new PlayerProfile(player.Id, player.DisplayName, player.CreatedAtUtc),
             BoardStateMapper.Map(board, _itemCatalog),
             economy.CreateSnapshot(now),

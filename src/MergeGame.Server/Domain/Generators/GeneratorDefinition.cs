@@ -7,6 +7,7 @@ public sealed record GeneratorDefinition(
     string Id,
     string GeneratedChainId,
     int GeneratedLevel,
+    int EnergyCost,
     int MaxCharges,
     TimeSpan ChargeRecoveryInterval);
 

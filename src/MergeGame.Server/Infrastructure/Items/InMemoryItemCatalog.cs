@@ -31,6 +31,11 @@ public sealed class InMemoryItemCatalog : IItemCatalog
         return TryGet(chainId, currentLevel + 1, out nextDefinition);
     }
 
+    public IReadOnlyList<ItemDefinition> GetAll() => Definitions.Values
+        .OrderBy(value => value.ChainId, StringComparer.Ordinal)
+        .ThenBy(value => value.Level)
+        .ToArray();
+
     /// <summary>
     /// 첫 번째 머지 체인의 모든 단계를 한곳에서 정의합니다.
     /// 마지막 단계에는 IsMaxLevel을 표시해 의도하지 않은 다음 단계 추가를 방지합니다.

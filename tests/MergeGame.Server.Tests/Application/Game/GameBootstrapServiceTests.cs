@@ -1,5 +1,6 @@
 using MergeGame.Server.Application.Game;
 using MergeGame.Server.Domain.Players;
+using MergeGame.Server.Domain.Content;
 using MergeGame.Server.Infrastructure.Generators;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
@@ -22,7 +23,7 @@ public sealed class GameBootstrapServiceTests
         var result = await fixture.Service.ExecuteAsync(fixture.PlayerId);
 
         Assert.NotNull(result);
-        Assert.Equal(GameBootstrapService.CurrentContentVersion, result.ContentVersion);
+        Assert.Equal(GameContentVersion.Current, result.ContentVersion);
         Assert.Equal(Now.UtcDateTime, result.ServerTimeUtc);
         Assert.Equal(2, result.Board.Items.Count);
         Assert.Equal(100, result.Economy.Energy);

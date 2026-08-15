@@ -146,6 +146,9 @@ public sealed class PlayerBoardTests
     /// </summary>
     private sealed class MaxLevelCatalog : IItemCatalog
     {
+        public IReadOnlyList<ItemDefinition> GetAll() =>
+            [new ItemDefinition("garden", 1, "Max Item", IsMaxLevel: true)];
+
         public bool TryGet(
             string chainId,
             int level,

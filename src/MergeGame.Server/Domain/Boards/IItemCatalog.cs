@@ -17,4 +17,7 @@ public interface IItemCatalog
         string chainId,
         int currentLevel,
         out ItemDefinition nextDefinition);
+
+    /// <summary>콘텐츠 API가 모든 정의를 계열과 레벨 순서로 안전하게 열거합니다.</summary>
+    IReadOnlyList<ItemDefinition> GetAll();
 }

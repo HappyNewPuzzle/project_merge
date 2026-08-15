@@ -12,6 +12,7 @@ public sealed class InMemoryGeneratorCatalog : IGeneratorCatalog
         Id: "garden",
         GeneratedChainId: "garden",
         GeneratedLevel: 1,
+        EnergyCost: 1,
         MaxCharges: 5,
         ChargeRecoveryInterval: TimeSpan.FromSeconds(30));
 

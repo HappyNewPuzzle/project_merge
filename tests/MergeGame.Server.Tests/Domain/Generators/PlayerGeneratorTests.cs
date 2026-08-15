@@ -6,7 +6,7 @@ namespace MergeGame.Server.Tests.Domain.Generators;
 public sealed class PlayerGeneratorTests
 {
     private static readonly GeneratorDefinition Definition =
-        new("garden", "garden", 1, 5, TimeSpan.FromSeconds(30));
+        new("garden", "garden", 1, 1, 5, TimeSpan.FromSeconds(30));
 
     [Fact]
     public void CreateSnapshot_AfterCooldownInterval_RecoversOneCharge()
