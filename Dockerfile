@@ -1,5 +1,5 @@
 # 빌드 단계는 저장소의 global.json과 같은 .NET 8 SDK 패치 버전을 사용합니다.
-FROM mcr.microsoft.com/dotnet/sdk:8.0.422 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.400 AS build
 WORKDIR /src
 
 # 프로젝트 파일을 먼저 복사하면 소스만 바뀐 빌드에서 NuGet 복원 계층을 재사용할 수 있습니다.
