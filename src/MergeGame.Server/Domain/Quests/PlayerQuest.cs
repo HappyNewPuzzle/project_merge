@@ -15,6 +15,9 @@ public sealed class PlayerQuest
 
     public Guid PlayerId { get; private set; }
     public string QuestId { get; private set; } = string.Empty;
+    public string EventType { get; private set; } = string.Empty;
+    public string PeriodType { get; private set; } = string.Empty;
+    public string PeriodKey { get; private set; } = string.Empty;
     public int CurrentCount { get; private set; }
     public int TargetCount { get; private set; }
     public long RewardCoins { get; private set; }
@@ -24,22 +27,63 @@ public sealed class PlayerQuest
 
     public static PlayerQuest CreateFirstMergeQuest(Guid playerId)
     {
+        return Create(
+            playerId,
+            new QuestDefinition(
+                FirstMergeQuestId,
+                "item_merged",
+                FirstMergeTarget,
+                FirstMergeRewardCoins,
+                QuestPeriodType.Lifetime),
+            "lifetime");
+    }
+
+    public static PlayerQuest Create(Guid playerId, QuestDefinition definition, string periodKey)
+    {
         return new PlayerQuest
         {
             PlayerId = playerId,
-            QuestId = FirstMergeQuestId,
-            TargetCount = FirstMergeTarget,
-            RewardCoins = FirstMergeRewardCoins,
+            QuestId = definition.QuestId,
+            EventType = definition.EventType,
+            PeriodType = definition.PeriodType.ToString().ToLowerInvariant(),
+            PeriodKey = periodKey,
+            TargetCount = definition.TargetCount,
+            RewardCoins = definition.RewardCoins,
             Revision = 1
         };
+    }
+
+    /// <summary>일일·주간 경계가 바뀌면 같은 퀘스트 행을 새 기간의 초기 상태로 전환합니다.</summary>
+    public bool EnsureCurrentPeriod(QuestDefinition definition, string periodKey)
+    {
+        if (string.Equals(PeriodKey, periodKey, StringComparison.Ordinal)
+            && string.Equals(EventType, definition.EventType, StringComparison.Ordinal)
+            && TargetCount == definition.TargetCount
+            && RewardCoins == definition.RewardCoins)
+            return false;
+
+        EventType = definition.EventType;
+        PeriodType = definition.PeriodType.ToString().ToLowerInvariant();
+        PeriodKey = periodKey;
+        CurrentCount = 0;
+        TargetCount = definition.TargetCount;
+        RewardCoins = definition.RewardCoins;
+        CompletedAtUtc = null;
+        ClaimedAtUtc = null;
+        Revision++;
+        return true;
     }
 
     /// <summary>
     /// 성공한 머지 한 건을 반영하며 목표 이상으로 카운트가 증가하지 않게 합니다.
     /// </summary>
     public void RecordSuccessfulMerge(DateTime occurredAtUtc)
+        => RecordEvent("item_merged", occurredAtUtc);
+
+    /// <summary>이 퀘스트가 구독한 서버 확정 이벤트만 목표 수치까지 반영합니다.</summary>
+    public void RecordEvent(string eventType, DateTime occurredAtUtc)
     {
-        if (CompletedAtUtc is not null)
+        if (!string.Equals(EventType, eventType, StringComparison.Ordinal) || CompletedAtUtc is not null)
         {
             return;
         }
@@ -83,7 +127,10 @@ public sealed class PlayerQuest
         RewardCoins,
         Revision,
         CompletedAtUtc is not null,
-        ClaimedAtUtc is not null);
+        ClaimedAtUtc is not null,
+        EventType,
+        PeriodType,
+        PeriodKey);
 }
 
 public enum QuestClaimError
@@ -102,4 +149,7 @@ public sealed record QuestSnapshot(
     long RewardCoins,
     long Revision,
     bool IsCompleted,
-    bool IsClaimed);
+    bool IsClaimed,
+    string EventType,
+    string PeriodType,
+    string PeriodKey);

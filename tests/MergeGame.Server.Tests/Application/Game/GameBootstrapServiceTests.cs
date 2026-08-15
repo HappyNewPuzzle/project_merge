@@ -5,6 +5,7 @@ using MergeGame.Server.Infrastructure.Generators;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Social;
+using MergeGame.Server.Infrastructure.Quests;
 using Microsoft.EntityFrameworkCore;
 
 namespace MergeGame.Server.Tests.Application.Game;
@@ -29,11 +30,11 @@ public sealed class GameBootstrapServiceTests
         Assert.Equal(100, result.Economy.Energy);
         Assert.Single(result.Generators);
         Assert.Equal(5, result.Generators[0].Charges);
-        Assert.Single(result.Quests);
+        Assert.Equal(5, result.Quests.Count);
         Assert.Equal("ABCDEFGH", result.Social.FriendCode);
         Assert.Equal(1, await fixture.Db.PlayerBoards.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerEconomies.CountAsync());
-        Assert.Equal(1, await fixture.Db.PlayerQuests.CountAsync());
+        Assert.Equal(5, await fixture.Db.PlayerQuests.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerSocialProfiles.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerGenerators.CountAsync());
     }
@@ -75,6 +76,7 @@ public sealed class GameBootstrapServiceTests
                 new InMemoryItemCatalog(),
                 new InMemoryGeneratorCatalog(),
                 new StubFriendCodeGenerator(),
+                new InMemoryQuestCatalog(),
                 new StubTimeProvider());
         }
 

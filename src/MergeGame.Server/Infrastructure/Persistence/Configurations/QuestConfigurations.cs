@@ -14,6 +14,9 @@ public sealed class PlayerQuestConfiguration : IEntityTypeConfiguration<PlayerQu
         builder.HasKey(quest => new { quest.PlayerId, quest.QuestId });
         builder.Property(quest => quest.PlayerId).HasColumnName("player_id").HasColumnType("char(36)");
         builder.Property(quest => quest.QuestId).HasColumnName("quest_id").HasMaxLength(64).UseCollation("ascii_bin");
+        builder.Property(quest => quest.EventType).HasColumnName("event_type").HasMaxLength(32).UseCollation("ascii_bin");
+        builder.Property(quest => quest.PeriodType).HasColumnName("period_type").HasMaxLength(16).UseCollation("ascii_bin");
+        builder.Property(quest => quest.PeriodKey).HasColumnName("period_key").HasMaxLength(16).UseCollation("ascii_bin");
         builder.Property(quest => quest.CurrentCount).HasColumnName("current_count");
         builder.Property(quest => quest.TargetCount).HasColumnName("target_count");
         builder.Property(quest => quest.RewardCoins).HasColumnName("reward_coins").HasColumnType("bigint");

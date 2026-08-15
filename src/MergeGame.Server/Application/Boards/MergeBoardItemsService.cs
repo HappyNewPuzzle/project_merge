@@ -1,5 +1,6 @@
 using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Quests;
+using MergeGame.Server.Application.Quests;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,15 +14,18 @@ public sealed class MergeBoardItemsService
     private readonly MergeGameDbContext _dbContext;
     private readonly IItemCatalog _itemCatalog;
     private readonly TimeProvider _timeProvider;
+    private readonly QuestProgressService _questProgress;
 
     public MergeBoardItemsService(
         MergeGameDbContext dbContext,
         IItemCatalog itemCatalog,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        QuestProgressService questProgress)
     {
         _dbContext = dbContext;
         _itemCatalog = itemCatalog;
         _timeProvider = timeProvider;
+        _questProgress = questProgress;
     }
 
     public async Task<MergeBoardServiceResult> ExecuteAsync(
@@ -60,11 +64,7 @@ public sealed class MergeBoardItemsService
         }
 
         // 서버가 성공으로 확정한 머지만 이벤트와 퀘스트에 반영하며 보드 변경과 같은 트랜잭션에 넣습니다.
-        var quest = await _dbContext.PlayerQuests.SingleOrDefaultAsync(
-            value => value.PlayerId == playerId
-                && value.QuestId == PlayerQuest.FirstMergeQuestId,
-            cancellationToken);
-        quest?.RecordSuccessfulMerge(occurredAtUtc);
+        await _questProgress.RecordAsync(playerId, "item_merged", occurredAtUtc, cancellationToken);
         _dbContext.GameplayEvents.Add(GameplayEvent.CreateMerge(
             playerId,
             board.Revision,

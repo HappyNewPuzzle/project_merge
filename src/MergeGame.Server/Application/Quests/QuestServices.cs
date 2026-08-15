@@ -9,28 +9,46 @@ namespace MergeGame.Server.Application.Quests;
 public sealed class QuestQueryService
 {
     private readonly MergeGameDbContext _dbContext;
+    private readonly IQuestCatalog _questCatalog;
+    private readonly TimeProvider _timeProvider;
 
-    public QuestQueryService(MergeGameDbContext dbContext)
+    public QuestQueryService(
+        MergeGameDbContext dbContext,
+        IQuestCatalog questCatalog,
+        TimeProvider timeProvider)
     {
         _dbContext = dbContext;
+        _questCatalog = questCatalog;
+        _timeProvider = timeProvider;
     }
 
-    public async Task<QuestSnapshot?> InitializeAsync(
+    public async Task<IReadOnlyList<QuestSnapshot>?> InitializeAsync(
         Guid playerId,
         CancellationToken cancellationToken = default)
     {
-        var quest = await FindAsync(playerId, tracking: true, cancellationToken);
-        if (quest is not null)
-        {
-            return quest.ToSnapshot();
-        }
         if (!await _dbContext.Players.AnyAsync(value => value.Id == playerId, cancellationToken))
-        {
             return null;
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var quests = await _dbContext.PlayerQuests
+            .Where(value => value.PlayerId == playerId)
+            .ToListAsync(cancellationToken);
+        foreach (var definition in _questCatalog.GetAll())
+        {
+            var periodKey = QuestPeriodKey.Create(definition.PeriodType, now);
+            var quest = quests.SingleOrDefault(value => value.QuestId == definition.QuestId);
+            if (quest is null)
+            {
+                quest = PlayerQuest.Create(playerId, definition, periodKey);
+                quests.Add(quest);
+                _dbContext.PlayerQuests.Add(quest);
+            }
+            else
+            {
+                quest.EnsureCurrentPeriod(definition, periodKey);
+            }
         }
 
-        quest = PlayerQuest.CreateFirstMergeQuest(playerId);
-        _dbContext.PlayerQuests.Add(quest);
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -38,32 +56,17 @@ public sealed class QuestQueryService
         catch (DbUpdateException)
         {
             _dbContext.ChangeTracker.Clear();
-            quest = await FindAsync(playerId, tracking: false, cancellationToken);
+            quests = await _dbContext.PlayerQuests.AsNoTracking()
+                .Where(value => value.PlayerId == playerId)
+                .ToListAsync(cancellationToken);
         }
-        return quest?.ToSnapshot();
+        return quests.OrderBy(value => value.QuestId, StringComparer.Ordinal)
+            .Select(value => value.ToSnapshot()).ToArray();
     }
 
-    public async Task<QuestSnapshot?> GetAsync(
+    public Task<IReadOnlyList<QuestSnapshot>?> GetAsync(
         Guid playerId,
-        CancellationToken cancellationToken = default)
-    {
-        var quest = await FindAsync(playerId, tracking: false, cancellationToken);
-        return quest?.ToSnapshot();
-    }
-
-    private Task<PlayerQuest?> FindAsync(
-        Guid playerId,
-        bool tracking,
-        CancellationToken cancellationToken)
-    {
-        var query = tracking
-            ? _dbContext.PlayerQuests
-            : _dbContext.PlayerQuests.AsNoTracking();
-        return query.SingleOrDefaultAsync(
-            value => value.PlayerId == playerId
-                && value.QuestId == PlayerQuest.FirstMergeQuestId,
-            cancellationToken);
-    }
+        CancellationToken cancellationToken = default) => InitializeAsync(playerId, cancellationToken);
 }
 
 /// <summary>퀘스트 보상, 경제 코인, 멱등성 원장을 한 트랜잭션으로 저장합니다.</summary>
@@ -71,13 +74,16 @@ public sealed class ClaimQuestRewardService
 {
     private readonly MergeGameDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
+    private readonly IQuestCatalog _questCatalog;
 
     public ClaimQuestRewardService(
         MergeGameDbContext dbContext,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IQuestCatalog questCatalog)
     {
         _dbContext = dbContext;
         _timeProvider = timeProvider;
+        _questCatalog = questCatalog;
     }
 
     public async Task<QuestRewardResult> ExecuteAsync(
@@ -98,6 +104,7 @@ public sealed class ClaimQuestRewardService
             // 동일 키 재시도는 전달된 오래된 revision과 무관하게 최초 성공 결과를 재구성합니다.
             return await BuildCurrentResultAsync(
                 playerId,
+                existingClaim.QuestId,
                 QuestRewardStatus.Replayed,
                 cancellationToken);
         }
@@ -114,6 +121,11 @@ public sealed class ClaimQuestRewardService
         }
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
+        if (!_questCatalog.TryGet(questId, out var definition))
+            return new QuestRewardResult(QuestRewardStatus.NotFound, null, economy.CreateSnapshot(now));
+        quest.EnsureCurrentPeriod(
+            definition,
+            QuestPeriodKey.Create(definition.PeriodType, now));
         var questError = quest.TryMarkClaimed(expectedQuestRevision, now);
         if (questError != QuestClaimError.None)
         {
@@ -148,7 +160,7 @@ public sealed class ClaimQuestRewardService
             quest.RewardCoins,
             economy.Coins,
             economy.Revision,
-            $"quest:{questId}:{idempotencyKey}",
+            $"quest-claim:{idempotencyKey}",
             now));
 
         try
@@ -164,7 +176,7 @@ public sealed class ClaimQuestRewardService
                         && value.IdempotencyKey == idempotencyKey,
                     cancellationToken);
             return claimWonByConcurrentRequest
-                ? await BuildCurrentResultAsync(playerId, QuestRewardStatus.Replayed, cancellationToken)
+                ? await BuildCurrentResultAsync(playerId, questId, QuestRewardStatus.Replayed, cancellationToken)
                 : new QuestRewardResult(QuestRewardStatus.Conflict, null, null);
         }
 
@@ -176,12 +188,13 @@ public sealed class ClaimQuestRewardService
 
     private async Task<QuestRewardResult> BuildCurrentResultAsync(
         Guid playerId,
+        string questId,
         QuestRewardStatus status,
         CancellationToken cancellationToken)
     {
         var quest = await _dbContext.PlayerQuests.AsNoTracking().SingleAsync(
             value => value.PlayerId == playerId
-                && value.QuestId == PlayerQuest.FirstMergeQuestId,
+                && value.QuestId == questId,
             cancellationToken);
         var economy = await _dbContext.PlayerEconomies.AsNoTracking().SingleAsync(
             value => value.PlayerId == playerId,

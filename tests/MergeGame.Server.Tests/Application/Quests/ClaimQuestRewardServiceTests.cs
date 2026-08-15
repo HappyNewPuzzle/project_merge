@@ -4,6 +4,7 @@ using MergeGame.Server.Domain.Players;
 using MergeGame.Server.Domain.Quests;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Quests;
 
@@ -30,7 +31,8 @@ public sealed class ClaimQuestRewardServiceTests
 
         var service = new ClaimQuestRewardService(
             dbContext,
-            new StubTimeProvider(now));
+            new StubTimeProvider(now),
+            new InMemoryQuestCatalog());
         var first = await service.ExecuteAsync(
             player.Id,
             PlayerQuest.FirstMergeQuestId,

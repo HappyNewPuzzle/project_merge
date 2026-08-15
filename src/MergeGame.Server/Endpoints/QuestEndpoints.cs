@@ -10,10 +10,10 @@ public static class QuestEndpoints
     {
         var group = app.MapGroup("/api/v1/quests").WithTags("Quests").RequireAuthorization();
         group.MapPost("/", InitializeAsync).WithName("InitializeQuests")
-            .Produces<Domain.Quests.QuestSnapshot>(StatusCodes.Status200OK)
+            .Produces<IReadOnlyList<Domain.Quests.QuestSnapshot>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
         group.MapGet("/", GetAsync).WithName("GetQuests")
-            .Produces<Domain.Quests.QuestSnapshot>(StatusCodes.Status200OK)
+            .Produces<IReadOnlyList<Domain.Quests.QuestSnapshot>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
         group.MapPost("/{questId}/claim", ClaimAsync).WithName("ClaimQuestReward")
             .Produces<QuestRewardResponse>(StatusCodes.Status200OK)

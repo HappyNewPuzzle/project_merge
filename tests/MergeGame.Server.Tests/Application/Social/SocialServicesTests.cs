@@ -5,6 +5,8 @@ using MergeGame.Server.Domain.Social;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Social;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Social;
 
@@ -43,7 +45,10 @@ public sealed class SocialServicesTests
         db.PlayerEconomies.Add(economy);
         await db.SaveChangesAsync();
         db.ChangeTracker.Clear();
-        var service = new SendFriendEnergyGiftService(db, new StubTimeProvider());
+        var service = new SendFriendEnergyGiftService(
+            db,
+            new StubTimeProvider(),
+            new QuestProgressService(db, new InMemoryQuestCatalog()));
 
         var sent = await service.ExecuteAsync(sender.Id, recipient.Id);
         db.ChangeTracker.Clear();
@@ -58,6 +63,8 @@ public sealed class SocialServicesTests
         var ledger = Assert.Single(await db.EconomyLedgerEntries.ToListAsync());
         Assert.Equal("friend.energy_received", ledger.Reason);
         Assert.Equal(1, ledger.Delta);
+        var quest = await db.PlayerQuests.SingleAsync(value => value.QuestId == "daily_friend_gift_1");
+        Assert.True(quest.ToSnapshot().IsCompleted);
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using MergeGame.Server.Application.Boards;
 using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Economy;
 using MergeGame.Server.Infrastructure.Persistence;
+using MergeGame.Server.Application.Quests;
 using Microsoft.EntityFrameworkCore;
 
 namespace MergeGame.Server.Application.Economy;
@@ -167,15 +168,18 @@ public sealed class GenerateBoardItemService
     private readonly MergeGameDbContext _dbContext;
     private readonly IItemCatalog _itemCatalog;
     private readonly TimeProvider _timeProvider;
+    private readonly QuestProgressService _questProgress;
 
     public GenerateBoardItemService(
         MergeGameDbContext dbContext,
         IItemCatalog itemCatalog,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        QuestProgressService questProgress)
     {
         _dbContext = dbContext;
         _itemCatalog = itemCatalog;
         _timeProvider = timeProvider;
+        _questProgress = questProgress;
     }
 
     public async Task<GenerateItemResult> ExecuteAsync(
@@ -256,6 +260,7 @@ public sealed class GenerateBoardItemService
             economy.Revision,
             $"generator:{boardResult.GeneratedItem!.Id:N}",
             now));
+        await _questProgress.RecordAsync(playerId, "item_generated", now, cancellationToken);
 
         try
         {

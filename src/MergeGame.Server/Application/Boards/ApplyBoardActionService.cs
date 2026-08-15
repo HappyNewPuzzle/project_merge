@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Quests;
+using MergeGame.Server.Application.Quests;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,15 +16,18 @@ public sealed class ApplyBoardActionService
     private readonly MergeGameDbContext _dbContext;
     private readonly IItemCatalog _itemCatalog;
     private readonly TimeProvider _timeProvider;
+    private readonly QuestProgressService _questProgress;
 
     public ApplyBoardActionService(
         MergeGameDbContext dbContext,
         IItemCatalog itemCatalog,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        QuestProgressService questProgress)
     {
         _dbContext = dbContext;
         _itemCatalog = itemCatalog;
         _timeProvider = timeProvider;
+        _questProgress = questProgress;
     }
 
     public async Task<ApplyBoardActionServiceResult> ExecuteAsync(
@@ -58,10 +62,7 @@ public sealed class ApplyBoardActionService
         if (actionResult.Action == BoardActionType.Merged)
         {
             // 기존 머지 API와 동일하게 통합 액션의 머지도 퀘스트 및 게임 이벤트에 반영합니다.
-            var quest = await _dbContext.PlayerQuests.SingleOrDefaultAsync(
-                value => value.PlayerId == playerId && value.QuestId == PlayerQuest.FirstMergeQuestId,
-                cancellationToken);
-            quest?.RecordSuccessfulMerge(now);
+            await _questProgress.RecordAsync(playerId, "item_merged", now, cancellationToken);
             _dbContext.GameplayEvents.Add(GameplayEvent.CreateMerge(
                 playerId, board.Revision, actionResult.ResultItem!.Level, now));
         }

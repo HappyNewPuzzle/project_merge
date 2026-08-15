@@ -2,6 +2,7 @@ using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Content;
 using MergeGame.Server.Domain.Economy;
 using MergeGame.Server.Domain.Generators;
+using MergeGame.Server.Domain.Quests;
 
 namespace MergeGame.Server.Application.Content;
 
@@ -10,11 +11,16 @@ public sealed class GetContentCatalogService
 {
     private readonly IItemCatalog _itemCatalog;
     private readonly IGeneratorCatalog _generatorCatalog;
+    private readonly IQuestCatalog _questCatalog;
 
-    public GetContentCatalogService(IItemCatalog itemCatalog, IGeneratorCatalog generatorCatalog)
+    public GetContentCatalogService(
+        IItemCatalog itemCatalog,
+        IGeneratorCatalog generatorCatalog,
+        IQuestCatalog questCatalog)
     {
         _itemCatalog = itemCatalog;
         _generatorCatalog = generatorCatalog;
+        _questCatalog = questCatalog;
     }
 
     public ContentCatalogResponse Execute()
@@ -39,6 +45,15 @@ public sealed class GetContentCatalogService
                 checked((int)value.ChargeRecoveryInterval.TotalSeconds)))
             .OrderBy(value => value.GeneratorId, StringComparer.Ordinal)
             .ToArray();
+        var quests = _questCatalog.GetAll()
+            .Select(value => new QuestCatalogState(
+                value.QuestId,
+                value.EventType,
+                value.TargetCount,
+                value.RewardCoins,
+                value.PeriodType.ToString().ToLowerInvariant()))
+            .OrderBy(value => value.QuestId, StringComparer.Ordinal)
+            .ToArray();
 
         return new ContentCatalogResponse(
             GameContentVersion.Current,
@@ -49,7 +64,8 @@ public sealed class GetContentCatalogService
                 PlayerEconomy.DailyCoinReward,
                 PlayerEconomy.FriendEnergyGiftAmount),
             chains,
-            generators);
+            generators,
+            quests);
     }
 }
 
@@ -58,7 +74,8 @@ public sealed record ContentCatalogResponse(
     BoardRulesState Board,
     EconomyRulesState Economy,
     IReadOnlyList<ItemChainCatalogState> ItemChains,
-    IReadOnlyList<GeneratorCatalogState> Generators);
+    IReadOnlyList<GeneratorCatalogState> Generators,
+    IReadOnlyList<QuestCatalogState> Quests);
 
 public sealed record BoardRulesState(int Width, int Height, int SlotCount);
 public sealed record EconomyRulesState(
@@ -75,3 +92,9 @@ public sealed record GeneratorCatalogState(
     int EnergyCost,
     int MaxCharges,
     int ChargeRecoverySeconds);
+public sealed record QuestCatalogState(
+    string QuestId,
+    string EventType,
+    int TargetCount,
+    long RewardCoins,
+    string PeriodType);

@@ -3,6 +3,7 @@ using MergeGame.Server.Domain.Boards;
 using MergeGame.Server.Domain.Economy;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
 
 namespace MergeGame.Server.Application.Boards;
 
@@ -13,15 +14,18 @@ public sealed class SellBoardItemService
     private readonly MergeGameDbContext _dbContext;
     private readonly IItemCatalog _itemCatalog;
     private readonly TimeProvider _timeProvider;
+    private readonly QuestProgressService _questProgress;
 
     public SellBoardItemService(
         MergeGameDbContext dbContext,
         IItemCatalog itemCatalog,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        QuestProgressService questProgress)
     {
         _dbContext = dbContext;
         _itemCatalog = itemCatalog;
         _timeProvider = timeProvider;
+        _questProgress = questProgress;
     }
 
     public async Task<SellBoardItemServiceResult> ExecuteAsync(
@@ -85,6 +89,7 @@ public sealed class SellBoardItemService
             economy.Revision,
             $"board-item:{itemId:N}",
             now));
+        await _questProgress.RecordAsync(playerId, "item_sold", now, cancellationToken);
 
         try
         {

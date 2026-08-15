@@ -23,6 +23,7 @@ public sealed class GameBootstrapService
     private readonly IItemCatalog _itemCatalog;
     private readonly IGeneratorCatalog _generatorCatalog;
     private readonly IFriendCodeGenerator _friendCodeGenerator;
+    private readonly IQuestCatalog _questCatalog;
     private readonly TimeProvider _timeProvider;
 
     public GameBootstrapService(
@@ -30,12 +31,14 @@ public sealed class GameBootstrapService
         IItemCatalog itemCatalog,
         IGeneratorCatalog generatorCatalog,
         IFriendCodeGenerator friendCodeGenerator,
+        IQuestCatalog questCatalog,
         TimeProvider timeProvider)
     {
         _dbContext = dbContext;
         _itemCatalog = itemCatalog;
         _generatorCatalog = generatorCatalog;
         _friendCodeGenerator = friendCodeGenerator;
+        _questCatalog = questCatalog;
         _timeProvider = timeProvider;
     }
 
@@ -88,13 +91,23 @@ public sealed class GameBootstrapService
             _dbContext.PlayerEconomies.Add(economy);
         }
 
-        var quest = await _dbContext.PlayerQuests.SingleOrDefaultAsync(
-            value => value.PlayerId == playerId && value.QuestId == PlayerQuest.FirstMergeQuestId,
-            cancellationToken);
-        if (quest is null)
+        var quests = await _dbContext.PlayerQuests
+            .Where(value => value.PlayerId == playerId)
+            .ToListAsync(cancellationToken);
+        foreach (var definition in _questCatalog.GetAll())
         {
-            quest = PlayerQuest.CreateFirstMergeQuest(playerId);
-            _dbContext.PlayerQuests.Add(quest);
+            var periodKey = QuestPeriodKey.Create(definition.PeriodType, now);
+            var quest = quests.SingleOrDefault(value => value.QuestId == definition.QuestId);
+            if (quest is null)
+            {
+                quest = PlayerQuest.Create(playerId, definition, periodKey);
+                quests.Add(quest);
+                _dbContext.PlayerQuests.Add(quest);
+            }
+            else
+            {
+                quest.EnsureCurrentPeriod(definition, periodKey);
+            }
         }
 
         var socialProfile = await _dbContext.PlayerSocialProfiles.SingleOrDefaultAsync(
@@ -140,7 +153,8 @@ public sealed class GameBootstrapService
             BoardStateMapper.Map(board, _itemCatalog),
             economy.CreateSnapshot(now),
             generatorStates,
-            [quest.ToSnapshot()],
+            quests.OrderBy(value => value.QuestId, StringComparer.Ordinal)
+                .Select(value => value.ToSnapshot()).ToArray(),
             social);
     }
 

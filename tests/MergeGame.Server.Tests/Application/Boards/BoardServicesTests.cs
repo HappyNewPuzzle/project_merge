@@ -4,6 +4,8 @@ using MergeGame.Server.Domain.Players;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Boards;
 
@@ -62,7 +64,8 @@ public sealed class BoardServicesTests
         var mergeService = new MergeBoardItemsService(
             dbContext,
             catalog,
-            timeProvider);
+            timeProvider,
+            new QuestProgressService(dbContext, new InMemoryQuestCatalog()));
         var result = await mergeService.ExecuteAsync(
             player.Id,
             sourceSlot: 0,
@@ -80,6 +83,8 @@ public sealed class BoardServicesTests
         Assert.Equal(1, savedItem.SlotIndex);
         Assert.Equal(2, savedItem.Level);
         Assert.Equal(1, await dbContext.GameplayEvents.CountAsync());
+        Assert.Equal(2, await dbContext.PlayerQuests.CountAsync());
+        Assert.All(await dbContext.PlayerQuests.ToListAsync(), value => Assert.Equal(1, value.CurrentCount));
     }
 
     /// <summary>

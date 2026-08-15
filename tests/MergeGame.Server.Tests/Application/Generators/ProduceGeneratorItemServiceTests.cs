@@ -7,6 +7,8 @@ using MergeGame.Server.Infrastructure.Generators;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Generators;
 
@@ -43,6 +45,8 @@ public sealed class ProduceGeneratorItemServiceTests
         var ledger = Assert.Single(await fixture.Db.EconomyLedgerEntries.ToListAsync());
         Assert.Equal("generator.energy_spent", ledger.Reason);
         Assert.Equal(-1, ledger.Delta);
+        Assert.Equal(1, (await fixture.Db.PlayerQuests.SingleAsync(
+            value => value.QuestId == "daily_generate_5")).CurrentCount);
     }
 
     [Fact]
@@ -175,7 +179,8 @@ public sealed class ProduceGeneratorItemServiceTests
                 db,
                 new InMemoryItemCatalog(),
                 new InMemoryGeneratorCatalog(),
-                new StubTimeProvider(Now));
+                new StubTimeProvider(Now),
+                new QuestProgressService(db, new InMemoryQuestCatalog()));
         }
 
         public MergeGameDbContext Db { get; }

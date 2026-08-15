@@ -4,6 +4,8 @@ using MergeGame.Server.Domain.Players;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Boards;
 
@@ -58,7 +60,11 @@ public sealed class ApplyBoardActionServiceTests
         {
             Db = db;
             PlayerId = playerId;
-            Service = new ApplyBoardActionService(db, new InMemoryItemCatalog(), new StubTimeProvider());
+            Service = new ApplyBoardActionService(
+                db,
+                new InMemoryItemCatalog(),
+                new StubTimeProvider(),
+                new QuestProgressService(db, new InMemoryQuestCatalog()));
         }
 
         public MergeGameDbContext Db { get; }

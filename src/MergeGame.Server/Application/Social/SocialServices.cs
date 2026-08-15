@@ -2,6 +2,7 @@ using MergeGame.Server.Domain.Social;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Social;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
 
 namespace MergeGame.Server.Application.Social;
 
@@ -120,9 +121,13 @@ public sealed class SendFriendEnergyGiftService
 {
     private readonly MergeGameDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
-    public SendFriendEnergyGiftService(MergeGameDbContext dbContext, TimeProvider timeProvider)
+    private readonly QuestProgressService _questProgress;
+    public SendFriendEnergyGiftService(
+        MergeGameDbContext dbContext,
+        TimeProvider timeProvider,
+        QuestProgressService questProgress)
     {
-        _dbContext = dbContext; _timeProvider = timeProvider;
+        _dbContext = dbContext; _timeProvider = timeProvider; _questProgress = questProgress;
     }
 
     public async Task<EnergyGiftResult> ExecuteAsync(Guid senderId, Guid recipientId, CancellationToken cancellationToken = default)
@@ -165,6 +170,7 @@ public sealed class SendFriendEnergyGiftService
             economy.Revision,
             $"friend-gift:{senderId:N}:{now:yyyy-MM-dd}",
             now));
+        await _questProgress.RecordAsync(senderId, "friend_energy_sent", now, cancellationToken);
         try { await _dbContext.SaveChangesAsync(cancellationToken); }
         catch (DbUpdateConcurrencyException) { return new(SocialActionStatus.Conflict, "recipient_economy_changed", null); }
         catch (DbUpdateException) { return new(SocialActionStatus.AlreadyCompleted, "gift_already_sent_today", null); }

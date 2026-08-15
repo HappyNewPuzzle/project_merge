@@ -2,6 +2,7 @@ using MergeGame.Server.Application.Content;
 using MergeGame.Server.Domain.Content;
 using MergeGame.Server.Infrastructure.Generators;
 using MergeGame.Server.Infrastructure.Items;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Content;
 
@@ -12,7 +13,7 @@ public sealed class GetContentCatalogServiceTests
     public void Execute_ReturnsVersionedBoardItemEconomyAndGeneratorRules()
     {
         var service = new GetContentCatalogService(
-            new InMemoryItemCatalog(), new InMemoryGeneratorCatalog());
+            new InMemoryItemCatalog(), new InMemoryGeneratorCatalog(), new InMemoryQuestCatalog());
 
         var result = service.Execute();
 
@@ -27,5 +28,7 @@ public sealed class GetContentCatalogServiceTests
         var generator = Assert.Single(result.Generators);
         Assert.Equal(1, generator.EnergyCost);
         Assert.Equal(30, generator.ChargeRecoverySeconds);
+        Assert.Equal(5, result.Quests.Count);
+        Assert.Contains(result.Quests, value => value.QuestId == "weekly_merge_20" && value.PeriodType == "weekly");
     }
 }

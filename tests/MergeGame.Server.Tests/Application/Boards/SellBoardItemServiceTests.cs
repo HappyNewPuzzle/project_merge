@@ -5,6 +5,8 @@ using MergeGame.Server.Domain.Players;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Boards;
 
@@ -37,6 +39,8 @@ public sealed class SellBoardItemServiceTests
         var ledger = Assert.Single(await fixture.Db.EconomyLedgerEntries.ToListAsync());
         Assert.Equal("board_item.sold", ledger.Reason);
         Assert.Equal(5, ledger.Delta);
+        Assert.Equal(1, (await fixture.Db.PlayerQuests.SingleAsync(
+            value => value.QuestId == "daily_sell_3")).CurrentCount);
     }
 
     [Fact]
@@ -89,7 +93,11 @@ public sealed class SellBoardItemServiceTests
         {
             Db = db;
             PlayerId = playerId;
-            Service = new SellBoardItemService(db, new InMemoryItemCatalog(), new StubTimeProvider());
+            Service = new SellBoardItemService(
+                db,
+                new InMemoryItemCatalog(),
+                new StubTimeProvider(),
+                new QuestProgressService(db, new InMemoryQuestCatalog()));
         }
         public MergeGameDbContext Db { get; }
         public Guid PlayerId { get; }

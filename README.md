@@ -31,6 +31,7 @@
 - [18단계: 버전형 서버 콘텐츠 카탈로그](docs/stages/18-versioned-content-catalog.md)
 - [19단계: 서버 권위형 아이템 판매](docs/stages/19-board-item-sales.md)
 - [20단계: 통합 경제 증감 원장](docs/stages/20-economy-ledger.md)
+- [21단계: 일일·주간 다중 퀘스트](docs/stages/21-recurring-quests.md)
 
 ## 빠른 실행
 
@@ -124,11 +125,12 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 ## 퀘스트 API
 
-- `POST /api/v1/quests/`: 첫 머지 퀘스트 초기화
-- `GET /api/v1/quests/`: 현재 진행도 조회
+- `POST /api/v1/quests/`: 일회성·일일·주간 퀘스트 초기화
+- `GET /api/v1/quests/`: 현재 UTC 기간의 전체 퀘스트 조회
 - `POST /api/v1/quests/{questId}/claim`: 멱등성 키로 보상 수령
 
 상세 흐름은 [6단계 문서](docs/stages/06-quests-and-idempotent-rewards.md)에 있습니다.
+다중 퀘스트 이벤트와 UTC 초기화 규칙은 [21단계 문서](docs/stages/21-recurring-quests.md)를 참고하세요.
 
 ## Docker 통합 환경
 

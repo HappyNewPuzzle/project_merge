@@ -38,4 +38,31 @@ public sealed class PlayerQuestTests
         Assert.Equal(QuestClaimError.NotCompleted, result);
         Assert.Equal(1, quest.Revision);
     }
+
+    [Fact]
+    public void EnsureCurrentPeriod_NewDailyKey_ResetsProgressAndClaimState()
+    {
+        var definition = new QuestDefinition(
+            "daily_test", "item_generated", 1, 10, QuestPeriodType.Daily);
+        var quest = PlayerQuest.Create(Guid.NewGuid(), definition, "2026-08-14");
+        quest.RecordEvent("item_generated", new DateTime(2026, 8, 14, 0, 0, 0, DateTimeKind.Utc));
+        Assert.Equal(QuestClaimError.None, quest.TryMarkClaimed(2, DateTime.UtcNow));
+
+        var changed = quest.EnsureCurrentPeriod(definition, "2026-08-15");
+        var snapshot = quest.ToSnapshot();
+
+        Assert.True(changed);
+        Assert.Equal(0, snapshot.CurrentCount);
+        Assert.False(snapshot.IsCompleted);
+        Assert.False(snapshot.IsClaimed);
+        Assert.Equal("2026-08-15", snapshot.PeriodKey);
+    }
+
+    [Fact]
+    public void WeeklyPeriodKey_UsesUtcMonday()
+    {
+        var sunday = new DateTime(2026, 8, 16, 23, 0, 0, DateTimeKind.Utc);
+        Assert.Equal("2026-08-10", QuestPeriodKey.Create(QuestPeriodType.Weekly, sunday));
+        Assert.Equal("2026-08-17", QuestPeriodKey.Create(QuestPeriodType.Weekly, sunday.AddHours(1)));
+    }
 }

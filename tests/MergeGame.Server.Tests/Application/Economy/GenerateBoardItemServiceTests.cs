@@ -5,6 +5,8 @@ using MergeGame.Server.Domain.Players;
 using MergeGame.Server.Infrastructure.Items;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MergeGame.Server.Application.Quests;
+using MergeGame.Server.Infrastructure.Quests;
 
 namespace MergeGame.Server.Tests.Application.Economy;
 
@@ -39,7 +41,8 @@ public sealed class GenerateBoardItemServiceTests
         var service = new GenerateBoardItemService(
             dbContext,
             new InMemoryItemCatalog(),
-            new StubTimeProvider(FixedNow));
+            new StubTimeProvider(FixedNow),
+            new QuestProgressService(dbContext, new InMemoryQuestCatalog()));
         var result = await service.ExecuteAsync(
             player.Id,
             targetSlot: 2,
