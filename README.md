@@ -27,6 +27,7 @@
 - [14단계: 제한형 관리자 코인 조정](docs/stages/14-admin-coin-adjustment.md)
 - [15단계: 서버 권위형 생성기 API](docs/stages/15-server-authoritative-generator.md)
 - [16단계: 서버 권위형 보드 이동·교환·머지](docs/stages/16-server-authoritative-board-actions.md)
+- [17단계: 게임 부트스트랩 및 초기 동기화](docs/stages/17-game-bootstrap.md)
 
 ## 빠른 실행
 
@@ -46,6 +47,10 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 응답의 `guestToken`은 원문을 다시 조회할 수 없으므로 클라이언트 보안 저장소에
 즉시 보관해야 합니다.
+
+로그인 직후 `POST /api/v1/game/bootstrap`을 호출하면 누락된 게임 상태를 한 번에 초기화하고
+플레이어·보드·경제·생성기·퀘스트·소셜 전체 스냅샷을 받을 수 있습니다. 자세한 흐름은
+[17단계 문서](docs/stages/17-game-bootstrap.md)를 참고하세요.
 
 ## 로그인 및 인증 API
 

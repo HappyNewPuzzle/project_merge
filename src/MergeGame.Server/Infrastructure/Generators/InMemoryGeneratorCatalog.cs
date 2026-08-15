@@ -26,4 +26,6 @@ public sealed class InMemoryGeneratorCatalog : IGeneratorCatalog
         definition = null!;
         return false;
     }
+
+    public IReadOnlyList<GeneratorDefinition> GetAll() => [Garden];
 }

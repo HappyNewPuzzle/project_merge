@@ -16,4 +16,7 @@ public sealed record GeneratorDefinition(
 public interface IGeneratorCatalog
 {
     bool TryGet(string generatorId, out GeneratorDefinition definition);
+
+    /// <summary>부트스트랩과 콘텐츠 API가 현재 활성 생성기 전체를 안정된 순서로 조회합니다.</summary>
+    IReadOnlyList<GeneratorDefinition> GetAll();
 }
