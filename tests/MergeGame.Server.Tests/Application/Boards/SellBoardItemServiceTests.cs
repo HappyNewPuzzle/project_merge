@@ -34,6 +34,9 @@ public sealed class SellBoardItemServiceTests
         Assert.Equal(2, board.Revision);
         Assert.Equal(5, economy.Coins);
         Assert.Equal(2, economy.Revision);
+        var ledger = Assert.Single(await fixture.Db.EconomyLedgerEntries.ToListAsync());
+        Assert.Equal("board_item.sold", ledger.Reason);
+        Assert.Equal(5, ledger.Delta);
     }
 
     [Fact]

@@ -30,6 +30,7 @@
 - [17단계: 게임 부트스트랩 및 초기 동기화](docs/stages/17-game-bootstrap.md)
 - [18단계: 버전형 서버 콘텐츠 카탈로그](docs/stages/18-versioned-content-catalog.md)
 - [19단계: 서버 권위형 아이템 판매](docs/stages/19-board-item-sales.md)
+- [20단계: 통합 경제 증감 원장](docs/stages/20-economy-ledger.md)
 
 ## 빠른 실행
 
@@ -116,8 +117,10 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 - `GET /api/v1/economy/`: 서버 시간 기준 에너지와 코인 조회
 - `POST /api/v1/economy/generate`: 기존 클라이언트 호환용 슬롯 지정 생성 API
 - `POST /api/v1/economy/daily-reward`: UTC 날짜 기준 하루 한 번 코인 50 지급
+- `GET /api/v1/economy/ledger`: 최근 에너지·코인 증감 사유 조회
 
 자세한 규칙은 [5단계 문서](docs/stages/05-economy-and-generator.md)에 있습니다.
+경제 변경 추적과 원장 운영 규칙은 [20단계 문서](docs/stages/20-economy-ledger.md)를 참고하세요.
 
 ## 퀘스트 API
 

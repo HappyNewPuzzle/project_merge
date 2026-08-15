@@ -50,6 +50,8 @@ public sealed class ClaimQuestRewardServiceTests
         Assert.Equal(QuestRewardStatus.Replayed, second.Status);
         Assert.Equal(PlayerQuest.FirstMergeRewardCoins, savedEconomy.Coins);
         Assert.Equal(1, await dbContext.RewardClaims.CountAsync());
+        var ledger = Assert.Single(await dbContext.EconomyLedgerEntries.ToListAsync());
+        Assert.Equal("quest.reward_claimed", ledger.Reason);
     }
 
     private sealed class StubTimeProvider : TimeProvider

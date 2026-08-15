@@ -142,6 +142,14 @@ public sealed class ClaimQuestRewardService
             questId,
             quest.RewardCoins,
             now));
+        _dbContext.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateCoins(
+            playerId,
+            "quest.reward_claimed",
+            quest.RewardCoins,
+            economy.Coins,
+            economy.Revision,
+            $"quest:{questId}:{idempotencyKey}",
+            now));
 
         try
         {

@@ -55,6 +55,9 @@ public sealed class SocialServicesTests
         Assert.Equal(100, storedEconomy.Energy);
         Assert.Equal(3, storedEconomy.Revision);
         Assert.Single(await db.EnergyGifts.ToListAsync());
+        var ledger = Assert.Single(await db.EconomyLedgerEntries.ToListAsync());
+        Assert.Equal("friend.energy_received", ledger.Reason);
+        Assert.Equal(1, ledger.Delta);
     }
 
     [Fact]

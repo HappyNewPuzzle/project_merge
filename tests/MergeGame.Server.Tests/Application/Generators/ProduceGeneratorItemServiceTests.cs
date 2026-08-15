@@ -40,6 +40,9 @@ public sealed class ProduceGeneratorItemServiceTests
         Assert.Equal(2, economy.Revision);
         Assert.Equal(4, generator.Charges);
         Assert.Single(await fixture.Db.GeneratorProductionReceipts.ToListAsync());
+        var ledger = Assert.Single(await fixture.Db.EconomyLedgerEntries.ToListAsync());
+        Assert.Equal("generator.energy_spent", ledger.Reason);
+        Assert.Equal(-1, ledger.Delta);
     }
 
     [Fact]

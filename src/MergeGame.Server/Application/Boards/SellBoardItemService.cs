@@ -77,6 +77,14 @@ public sealed class SellBoardItemService
             itemId,
             JsonSerializer.Serialize(response, ReceiptJsonOptions),
             now));
+        _dbContext.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateCoins(
+            playerId,
+            "board_item.sold",
+            sale.SalePrice,
+            economy.Coins,
+            economy.Revision,
+            $"board-item:{itemId:N}",
+            now));
 
         try
         {

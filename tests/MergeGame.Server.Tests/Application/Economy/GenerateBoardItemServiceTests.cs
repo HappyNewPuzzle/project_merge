@@ -56,6 +56,8 @@ public sealed class GenerateBoardItemServiceTests
         Assert.Contains(board.Items, item => item.SlotIndex == 2 && item.Level == 1);
         Assert.Equal(99, economy.Energy);
         Assert.Equal(2, economy.Revision);
+        Assert.Contains(await dbContext.EconomyLedgerEntries.ToListAsync(),
+            value => value.Reason == "generator.energy_spent" && value.Delta == -1);
     }
 
     private sealed class StubTimeProvider : TimeProvider

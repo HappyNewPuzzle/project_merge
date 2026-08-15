@@ -120,6 +120,15 @@ public sealed class ClaimDailyRewardService
                 error);
         }
 
+        _dbContext.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateCoins(
+            playerId,
+            "daily_reward.claimed",
+            PlayerEconomy.DailyCoinReward,
+            economy.Coins,
+            economy.Revision,
+            $"daily:{now:yyyy-MM-dd}",
+            now));
+
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -191,6 +200,9 @@ public sealed class GenerateBoardItemService
                 Economy: economy?.CreateSnapshot(now));
         }
 
+        var persistedEnergyBefore = economy.Energy;
+        var availableEnergyBefore = economy.CreateSnapshot(now).Energy;
+
         var boardResult = board.TryAddGeneratedItem(
             targetSlot,
             expectedBoardRevision,
@@ -225,6 +237,25 @@ public sealed class GenerateBoardItemService
 
         // 새 아이템은 이미 GUID가 있어 관계 탐색만으로는 Modified로 추론될 수 있으므로 Added 상태를 명시합니다.
         _dbContext.BoardItems.Add(boardResult.GeneratedItem!);
+        if (availableEnergyBefore > persistedEnergyBefore)
+        {
+            _dbContext.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateEnergy(
+                playerId,
+                "energy.recharged",
+                availableEnergyBefore - persistedEnergyBefore,
+                availableEnergyBefore,
+                economy.Revision,
+                $"generator:{boardResult.GeneratedItem!.Id:N}:recharge",
+                now));
+        }
+        _dbContext.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateEnergy(
+            playerId,
+            "generator.energy_spent",
+            -PlayerEconomy.GeneratorEnergyCost,
+            economy.Energy,
+            economy.Revision,
+            $"generator:{boardResult.GeneratedItem!.Id:N}",
+            now));
 
         try
         {

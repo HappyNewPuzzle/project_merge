@@ -33,8 +33,17 @@ public sealed class AdjustPlayerCoinsService
             return new(CoinAdjustmentStatus.InvalidBalance, economy.Coins, economy.Revision);
 
         var now = _time.GetUtcNow().UtcDateTime;
-        _db.AdminActionAudits.Add(AdminActionAudit.CreateCoinAdjustment(operatorId, key, playerId, before,
-            economy.Coins, reason, economy.Revision, now));
+        var audit = AdminActionAudit.CreateCoinAdjustment(operatorId, key, playerId, before,
+            economy.Coins, reason, economy.Revision, now);
+        _db.AdminActionAudits.Add(audit);
+        _db.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateCoins(
+            playerId,
+            "admin.coins_adjusted",
+            amount,
+            economy.Coins,
+            economy.Revision,
+            $"admin-audit:{audit.Id:N}",
+            now));
         try { await _db.SaveChangesAsync(token); }
         catch (DbUpdateConcurrencyException)
         {

@@ -26,6 +26,9 @@ public sealed class AdjustPlayerCoinsServiceTests
         Assert.Equal(CoinAdjustmentStatus.Replayed, replayed.Status);
         Assert.Equal(500, (await db.PlayerEconomies.SingleAsync()).Coins);
         Assert.Single(await db.AdminActionAudits.ToListAsync());
+        var ledger = Assert.Single(await db.EconomyLedgerEntries.ToListAsync());
+        Assert.Equal("admin.coins_adjusted", ledger.Reason);
+        Assert.Equal(500, ledger.Delta);
     }
 
     [Fact]

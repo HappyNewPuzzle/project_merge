@@ -140,10 +140,31 @@ public sealed class SendFriendEnergyGiftService
 
         var economy = await _dbContext.PlayerEconomies.SingleOrDefaultAsync(value => value.PlayerId == recipientId, cancellationToken);
         if (economy is null) return new(SocialActionStatus.NotFound, "recipient_economy_not_initialized", null);
+        var persistedEnergyBefore = economy.Energy;
+        var projectedEnergyBefore = economy.CreateSnapshot(now).Energy;
         if (economy.TryReceiveFriendEnergy(now) != Domain.Economy.EconomyActionError.None)
             return new(SocialActionStatus.InvalidAction, "recipient_energy_full", economy.CreateSnapshot(now));
 
         _dbContext.EnergyGifts.Add(EnergyGift.Create(senderId, recipientId, now));
+        if (projectedEnergyBefore > persistedEnergyBefore)
+        {
+            _dbContext.EconomyLedgerEntries.Add(Domain.Economy.EconomyLedgerEntry.CreateEnergy(
+                recipientId,
+                "energy.recharged",
+                projectedEnergyBefore - persistedEnergyBefore,
+                projectedEnergyBefore,
+                economy.Revision,
+                $"friend-gift:{senderId:N}:{now:yyyy-MM-dd}:recharge",
+                now));
+        }
+        _dbContext.EconomyLedgerEntries.Add(Domain.Economy.EconomyLedgerEntry.CreateEnergy(
+            recipientId,
+            "friend.energy_received",
+            economy.Energy - projectedEnergyBefore,
+            economy.Energy,
+            economy.Revision,
+            $"friend-gift:{senderId:N}:{now:yyyy-MM-dd}",
+            now));
         try { await _dbContext.SaveChangesAsync(cancellationToken); }
         catch (DbUpdateConcurrencyException) { return new(SocialActionStatus.Conflict, "recipient_economy_changed", null); }
         catch (DbUpdateException) { return new(SocialActionStatus.AlreadyCompleted, "gift_already_sent_today", null); }

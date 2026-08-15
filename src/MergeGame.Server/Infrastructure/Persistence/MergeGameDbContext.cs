@@ -39,6 +39,8 @@ public sealed class MergeGameDbContext : DbContext
     /// 플레이어의 에너지, 코인, 보상 이력과 경제 revision을 저장합니다.
     /// </summary>
     public DbSet<PlayerEconomy> PlayerEconomies => Set<PlayerEconomy>();
+    /// <summary>에너지와 코인의 모든 신규 증감을 사유별로 추적하는 불변 원장입니다.</summary>
+    public DbSet<EconomyLedgerEntry> EconomyLedgerEntries => Set<EconomyLedgerEntry>();
     public DbSet<PlayerQuest> PlayerQuests => Set<PlayerQuest>();
     public DbSet<GameplayEvent> GameplayEvents => Set<GameplayEvent>();
     public DbSet<RewardClaim> RewardClaims => Set<RewardClaim>();

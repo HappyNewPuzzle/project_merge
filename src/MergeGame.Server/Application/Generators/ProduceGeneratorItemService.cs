@@ -72,6 +72,7 @@ public sealed class ProduceGeneratorItemService
         generator ??= PlayerGenerator.CreateInitial(playerId, definition, now);
 
         var currentBoard = BoardStateMapper.Map(board, _itemCatalog);
+        var persistedEnergyBefore = economy.Energy;
         var currentEconomy = economy.CreateSnapshot(now);
         var currentGenerator = generator.CreateSnapshot(now, definition);
 
@@ -154,6 +155,25 @@ public sealed class ProduceGeneratorItemService
             idempotencyKey,
             generatorId,
             JsonSerializer.Serialize(response, ReceiptJsonOptions),
+            now));
+        if (currentEconomy.Energy > persistedEnergyBefore)
+        {
+            _dbContext.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateEnergy(
+                playerId,
+                "energy.recharged",
+                currentEconomy.Energy - persistedEnergyBefore,
+                currentEconomy.Energy,
+                economy.Revision,
+                $"generator:{boardResult.GeneratedItem!.Id:N}:recharge",
+                now));
+        }
+        _dbContext.EconomyLedgerEntries.Add(EconomyLedgerEntry.CreateEnergy(
+            playerId,
+            "generator.energy_spent",
+            -definition.EnergyCost,
+            economy.Energy,
+            economy.Revision,
+            $"generator:{boardResult.GeneratedItem!.Id:N}",
             now));
 
         try

@@ -20,6 +20,8 @@ public static class EconomyEndpoints
         group.MapGet("/", GetAsync).WithName("GetEconomy")
             .Produces<EconomySnapshot>(StatusCodes.Status200OK)
             .Produces<EconomyErrorResponse>(StatusCodes.Status404NotFound);
+        group.MapGet("/ledger", GetLedgerAsync).WithName("GetEconomyLedger")
+            .Produces<IReadOnlyList<EconomyLedgerEntryState>>(StatusCodes.Status200OK);
         group.MapPost("/generate", GenerateAsync).WithName("GenerateBoardItem")
             .Produces<GenerateItemResponse>(StatusCodes.Status200OK)
             .Produces<EconomyErrorResponse>(StatusCodes.Status404NotFound)
@@ -31,6 +33,18 @@ public static class EconomyEndpoints
             .Produces<EconomyErrorResponse>(StatusCodes.Status409Conflict)
             .Produces<EconomyErrorResponse>(StatusCodes.Status422UnprocessableEntity);
         return app;
+    }
+
+    /// <summary>최근 에너지·코인 변경 원장을 최신 순으로 최대 100건 반환합니다.</summary>
+    private static async Task<IResult> GetLedgerAsync(
+        int? limit,
+        ICurrentPlayerAccessor currentPlayer,
+        GetEconomyLedgerService service,
+        CancellationToken cancellationToken)
+    {
+        if (!currentPlayer.TryGetPlayerId(out var playerId))
+            return Results.Unauthorized();
+        return Results.Ok(await service.ExecuteAsync(playerId, limit ?? 50, cancellationToken));
     }
 
     private static async Task<IResult> InitializeAsync(
