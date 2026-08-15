@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <!-- 테스트 실행기와 코드 커버리지 수집기입니다. 배포 서버 결과물에는 포함되지 않습니다. -->
-    <PackageReference Include="coverlet.collector" Version="6.0.4">
+    <PackageReference Include="coverlet.collector" Version="10.0.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
