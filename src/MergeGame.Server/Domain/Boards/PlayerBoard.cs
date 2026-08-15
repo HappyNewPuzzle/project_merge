@@ -263,6 +263,46 @@ public sealed class PlayerBoard
         return BoardSaleResult.Succeeded(item, definition.SellPrice);
     }
 
+    /// <summary>보관함 이동을 위해 아이템을 제거하되 판매나 머지 효과는 적용하지 않습니다.</summary>
+    public BoardStorageResult TryTakeForInventory(
+        Guid itemId,
+        long expectedRevision,
+        DateTime updatedAtUtc)
+    {
+        if (Revision != expectedRevision)
+            return BoardStorageResult.Failed(BoardStorageError.StaleRevision);
+        var item = _items.SingleOrDefault(value => value.Id == itemId);
+        if (item is null)
+            return BoardStorageResult.Failed(BoardStorageError.ItemNotFound);
+        _items.Remove(item);
+        Revision++;
+        UpdatedAtUtc = DateTime.SpecifyKind(updatedAtUtc, DateTimeKind.Utc);
+        return BoardStorageResult.Succeeded(item);
+    }
+
+    /// <summary>보관함 아이템을 서버가 선택한 빈 슬롯에 같은 인스턴스 ID로 복원합니다.</summary>
+    public BoardStorageResult TryRestoreFromInventory(
+        Guid itemId,
+        string chainId,
+        int level,
+        int targetSlot,
+        long expectedRevision,
+        IItemCatalog itemCatalog,
+        DateTime updatedAtUtc)
+    {
+        if (Revision != expectedRevision)
+            return BoardStorageResult.Failed(BoardStorageError.StaleRevision);
+        if (!IsValidSlot(targetSlot) || _items.Any(value => value.SlotIndex == targetSlot))
+            return BoardStorageResult.Failed(BoardStorageError.TargetUnavailable);
+        if (!itemCatalog.TryGet(chainId, level, out _))
+            return BoardStorageResult.Failed(BoardStorageError.UnknownItemDefinition);
+        var item = BoardItem.Restore(itemId, PlayerId, targetSlot, chainId, level);
+        _items.Add(item);
+        Revision++;
+        UpdatedAtUtc = DateTime.SpecifyKind(updatedAtUtc, DateTimeKind.Utc);
+        return BoardStorageResult.Succeeded(item);
+    }
+
     private static bool IsValidSlot(int slotIndex)
     {
         return slotIndex >= 0 && slotIndex < SlotCount;
@@ -318,6 +358,26 @@ public sealed record BoardSaleResult(
         new(true, BoardSaleError.None, item, salePrice);
     public static BoardSaleResult Failed(BoardSaleError error) =>
         new(false, error, null, 0);
+}
+
+public enum BoardStorageError
+{
+    None,
+    StaleRevision,
+    ItemNotFound,
+    TargetUnavailable,
+    UnknownItemDefinition
+}
+
+public sealed record BoardStorageResult(
+    bool Success,
+    BoardStorageError Error,
+    BoardItem? Item)
+{
+    public static BoardStorageResult Succeeded(BoardItem item) =>
+        new(true, BoardStorageError.None, item);
+    public static BoardStorageResult Failed(BoardStorageError error) =>
+        new(false, error, null);
 }
 
 /// <summary>

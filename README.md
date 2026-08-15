@@ -32,6 +32,7 @@
 - [19단계: 서버 권위형 아이템 판매](docs/stages/19-board-item-sales.md)
 - [20단계: 통합 경제 증감 원장](docs/stages/20-economy-ledger.md)
 - [21단계: 일일·주간 다중 퀘스트](docs/stages/21-recurring-quests.md)
+- [22단계: 플레이어 인벤토리와 보관함](docs/stages/22-player-inventory.md)
 
 ## 빠른 실행
 
@@ -122,6 +123,15 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 자세한 규칙은 [5단계 문서](docs/stages/05-economy-and-generator.md)에 있습니다.
 경제 변경 추적과 원장 운영 규칙은 [20단계 문서](docs/stages/20-economy-ledger.md)를 참고하세요.
+
+## 인벤토리 API
+
+- `GET /api/v1/inventory/`: 현재 보관함과 revision 조회
+- `POST /api/v1/inventory/store`: 보드 아이템을 보관함으로 이동
+- `POST /api/v1/inventory/items/{itemId}/restore`: 서버 선택 빈 슬롯으로 복원
+
+아이템 ID 보존, 두 revision과 멱등 이동 규칙은
+[22단계 문서](docs/stages/22-player-inventory.md)를 참고하세요.
 
 ## 퀘스트 API
 

@@ -7,6 +7,7 @@ using MergeGame.Server.Domain.Social;
 using MergeGame.Server.Domain.Authentication;
 using MergeGame.Server.Domain.Administration;
 using MergeGame.Server.Domain.Generators;
+using MergeGame.Server.Domain.Inventory;
 
 namespace MergeGame.Server.Infrastructure.Persistence;
 
@@ -54,6 +55,9 @@ public sealed class MergeGameDbContext : DbContext
     public DbSet<PlayerGenerator> PlayerGenerators => Set<PlayerGenerator>();
     /// <summary>성공한 생성 요청을 재생하는 멱등 영수증입니다.</summary>
     public DbSet<GeneratorProductionReceipt> GeneratorProductionReceipts => Set<GeneratorProductionReceipt>();
+    public DbSet<PlayerInventory> PlayerInventories => Set<PlayerInventory>();
+    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    public DbSet<InventoryTransferReceipt> InventoryTransferReceipts => Set<InventoryTransferReceipt>();
 
     /// <summary>
     /// DI 컨테이너가 구성한 MySQL 연결 옵션을 받아 DbContext를 생성합니다.

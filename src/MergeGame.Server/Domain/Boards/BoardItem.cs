@@ -54,6 +54,21 @@ public sealed class BoardItem
         };
     }
 
+    /// <summary>보관함에서 돌아온 아이템의 기존 인스턴스 ID를 유지해 보드 객체로 복원합니다.</summary>
+    internal static BoardItem Restore(
+        Guid id,
+        Guid playerId,
+        int slotIndex,
+        string chainId,
+        int level) => new()
+        {
+            Id = id,
+            PlayerId = playerId,
+            SlotIndex = slotIndex,
+            ChainId = chainId,
+            Level = level
+        };
+
     /// <summary>
     /// 성공한 머지의 대상 아이템을 카탈로그가 결정한 다음 레벨로 올립니다.
     /// </summary>

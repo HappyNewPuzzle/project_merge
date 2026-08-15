@@ -20,6 +20,7 @@ public sealed class GetContentCatalogServiceTests
         Assert.Equal(GameContentVersion.Current, result.Version);
         Assert.Equal(35, result.Board.SlotCount);
         Assert.Equal(300, result.Economy.EnergyRechargeSeconds);
+        Assert.Equal(20, result.Inventory.InitialCapacity);
         var garden = Assert.Single(result.ItemChains);
         Assert.Equal(5, garden.Levels.Count);
         Assert.True(garden.Levels[^1].IsMaxLevel);

@@ -6,5 +6,5 @@ namespace MergeGame.Server.Domain.Content;
 /// </summary>
 public static class GameContentVersion
 {
-    public const string Current = "2026.08.15.2";
+    public const string Current = "2026.08.15.3";
 }

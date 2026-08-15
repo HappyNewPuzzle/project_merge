@@ -28,6 +28,8 @@ public sealed class GameBootstrapServiceTests
         Assert.Equal(Now.UtcDateTime, result.ServerTimeUtc);
         Assert.Equal(2, result.Board.Items.Count);
         Assert.Equal(100, result.Economy.Energy);
+        Assert.Equal(20, result.Inventory.Capacity);
+        Assert.Empty(result.Inventory.Items);
         Assert.Single(result.Generators);
         Assert.Equal(5, result.Generators[0].Charges);
         Assert.Equal(5, result.Quests.Count);
@@ -37,6 +39,7 @@ public sealed class GameBootstrapServiceTests
         Assert.Equal(5, await fixture.Db.PlayerQuests.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerSocialProfiles.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerGenerators.CountAsync());
+        Assert.Equal(1, await fixture.Db.PlayerInventories.CountAsync());
     }
 
     [Fact]

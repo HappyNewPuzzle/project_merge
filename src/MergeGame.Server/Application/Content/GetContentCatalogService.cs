@@ -3,6 +3,7 @@ using MergeGame.Server.Domain.Content;
 using MergeGame.Server.Domain.Economy;
 using MergeGame.Server.Domain.Generators;
 using MergeGame.Server.Domain.Quests;
+using MergeGame.Server.Domain.Inventory;
 
 namespace MergeGame.Server.Application.Content;
 
@@ -63,6 +64,7 @@ public sealed class GetContentCatalogService
                 checked((int)PlayerEconomy.EnergyRechargeInterval.TotalSeconds),
                 PlayerEconomy.DailyCoinReward,
                 PlayerEconomy.FriendEnergyGiftAmount),
+            new InventoryRulesState(PlayerInventory.InitialCapacity),
             chains,
             generators,
             quests);
@@ -73,6 +75,7 @@ public sealed record ContentCatalogResponse(
     string Version,
     BoardRulesState Board,
     EconomyRulesState Economy,
+    InventoryRulesState Inventory,
     IReadOnlyList<ItemChainCatalogState> ItemChains,
     IReadOnlyList<GeneratorCatalogState> Generators,
     IReadOnlyList<QuestCatalogState> Quests);
@@ -83,6 +86,7 @@ public sealed record EconomyRulesState(
     int EnergyRechargeSeconds,
     long DailyCoinReward,
     int FriendEnergyGiftAmount);
+public sealed record InventoryRulesState(int InitialCapacity);
 public sealed record ItemChainCatalogState(string ChainId, IReadOnlyList<ItemCatalogState> Levels);
 public sealed record ItemCatalogState(int Level, string Name, bool IsMaxLevel, long SellPrice);
 public sealed record GeneratorCatalogState(

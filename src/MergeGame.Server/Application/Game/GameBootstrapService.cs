@@ -7,6 +7,8 @@ using MergeGame.Server.Domain.Content;
 using MergeGame.Server.Domain.Generators;
 using MergeGame.Server.Domain.Quests;
 using MergeGame.Server.Domain.Social;
+using MergeGame.Server.Domain.Inventory;
+using MergeGame.Server.Application.Inventory;
 using MergeGame.Server.Infrastructure.Persistence;
 using MergeGame.Server.Infrastructure.Social;
 using Microsoft.EntityFrameworkCore;
@@ -118,6 +120,14 @@ public sealed class GameBootstrapService
             _dbContext.PlayerSocialProfiles.Add(socialProfile);
         }
 
+        var inventory = await _dbContext.PlayerInventories.Include(value => value.Items)
+            .SingleOrDefaultAsync(value => value.PlayerId == playerId, cancellationToken);
+        if (inventory is null)
+        {
+            inventory = PlayerInventory.CreateInitial(playerId, now);
+            _dbContext.PlayerInventories.Add(inventory);
+        }
+
         var existingGenerators = await _dbContext.PlayerGenerators
             .Where(value => value.PlayerId == playerId)
             .ToDictionaryAsync(value => value.GeneratorId, StringComparer.Ordinal, cancellationToken);
@@ -152,6 +162,7 @@ public sealed class GameBootstrapService
             new PlayerProfile(player.Id, player.DisplayName, player.CreatedAtUtc),
             BoardStateMapper.Map(board, _itemCatalog),
             economy.CreateSnapshot(now),
+            InventoryStateMapper.Map(inventory, _itemCatalog),
             generatorStates,
             quests.OrderBy(value => value.QuestId, StringComparer.Ordinal)
                 .Select(value => value.ToSnapshot()).ToArray(),
@@ -196,6 +207,7 @@ public sealed record GameBootstrapResponse(
     PlayerProfile Player,
     BoardState Board,
     EconomySnapshot Economy,
+    InventoryState Inventory,
     IReadOnlyList<GeneratorState> Generators,
     IReadOnlyList<QuestSnapshot> Quests,
     SocialState Social);
