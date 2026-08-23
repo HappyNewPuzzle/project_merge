@@ -30,15 +30,18 @@ public sealed class GameBootstrapServiceTests
         Assert.Equal(100, result.Economy.Energy);
         Assert.Equal(20, result.Inventory.Capacity);
         Assert.Empty(result.Inventory.Items);
-        Assert.Single(result.Generators);
-        Assert.Equal(5, result.Generators[0].Charges);
+        Assert.Equal(4, result.Generators.Count);
+        Assert.Equal(
+            new[] { "garden", "toy_basic", "food_basic", "rest_basic" },
+            result.Generators.Select(value => value.GeneratorId));
+        Assert.All(result.Generators, value => Assert.Equal(5, value.Charges));
         Assert.Equal(5, result.Quests.Count);
         Assert.Equal("ABCDEFGH", result.Social.FriendCode);
         Assert.Equal(1, await fixture.Db.PlayerBoards.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerEconomies.CountAsync());
         Assert.Equal(5, await fixture.Db.PlayerQuests.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerSocialProfiles.CountAsync());
-        Assert.Equal(1, await fixture.Db.PlayerGenerators.CountAsync());
+        Assert.Equal(4, await fixture.Db.PlayerGenerators.CountAsync());
         Assert.Equal(1, await fixture.Db.PlayerInventories.CountAsync());
     }
 
@@ -55,7 +58,7 @@ public sealed class GameBootstrapServiceTests
         Assert.Equal(first.Economy.Revision, second.Economy.Revision);
         Assert.Equal(first.Social.FriendCode, second.Social.FriendCode);
         Assert.Equal(2, await fixture.Db.BoardItems.CountAsync());
-        Assert.Equal(1, await fixture.Db.PlayerGenerators.CountAsync());
+        Assert.Equal(4, await fixture.Db.PlayerGenerators.CountAsync());
     }
 
     [Fact]

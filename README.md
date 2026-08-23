@@ -34,6 +34,7 @@
 - [21단계: 일일·주간 다중 퀘스트](docs/stages/21-recurring-quests.md)
 - [22단계: 플레이어 인벤토리와 보관함](docs/stages/22-player-inventory.md)
 - [23단계: 운영 안전장치와 배포 자동화](docs/stages/23-production-operations.md)
+- [24단계: Production Toy·Food·Rest Generator 콘텐츠](docs/stages/24-production-three-generator-content.md)
 
 ## 빠른 실행
 
@@ -114,6 +115,8 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 보내야 하며, 자세한 규칙은 [4단계 문서](docs/stages/04-board-and-merge.md)에 있습니다.
 새 Unity 클라이언트의 생성 요청과 재시도 규칙은
 [15단계 문서](docs/stages/15-server-authoritative-generator.md)를 참고하세요.
+Production `toy_basic`, `food_basic`, `rest_basic` 정의와 Lv01~08 체인은
+[24단계 문서](docs/stages/24-production-three-generator-content.md)를 참고하세요.
 통합 드래그 액션의 멱등 처리와 Unity 적용은
 [16단계 문서](docs/stages/16-server-authoritative-board-actions.md)를 참고하세요.
 보드 공간 확보와 판매 원자성은 [19단계 문서](docs/stages/19-board-item-sales.md)를 참고하세요.

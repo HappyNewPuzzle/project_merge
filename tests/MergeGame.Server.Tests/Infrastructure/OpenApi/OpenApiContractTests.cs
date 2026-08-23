@@ -75,6 +75,16 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
             .GetProperty("$ref").GetString();
         Assert.Equal("#/components/schemas/ProduceGeneratorItemRequest", produceRequestReference);
         Assert.Equal("#/components/schemas/GeneratorProduceResponse", produceResponseReference);
+
+        // 생성 결과, 비용과 대상 슬롯은 서버 권위 값이므로 요청 DTO에 다시 추가되면 계약 테스트가 실패합니다.
+        var requestProperties = document.RootElement.GetProperty("components").GetProperty("schemas")
+            .GetProperty("ProduceGeneratorItemRequest").GetProperty("properties");
+        Assert.Equal(3, requestProperties.EnumerateObject().Count());
+        Assert.True(requestProperties.TryGetProperty("expectedBoardRevision", out _));
+        Assert.True(requestProperties.TryGetProperty("expectedEconomyRevision", out _));
+        Assert.True(requestProperties.TryGetProperty("idempotencyKey", out _));
+        foreach (var forbidden in new[] { "itemId", "chainId", "level", "energyCost", "cost", "targetSlot" })
+            Assert.False(requestProperties.TryGetProperty(forbidden, out _), $"요청에 서버 권위 필드 {forbidden}이 노출됐습니다.");
     }
 
     [Fact]

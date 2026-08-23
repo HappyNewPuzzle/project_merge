@@ -21,14 +21,34 @@ public sealed class GetContentCatalogServiceTests
         Assert.Equal(35, result.Board.SlotCount);
         Assert.Equal(300, result.Economy.EnergyRechargeSeconds);
         Assert.Equal(20, result.Inventory.InitialCapacity);
-        var garden = Assert.Single(result.ItemChains);
+        Assert.Equal(4, result.ItemChains.Count);
+        var garden = Assert.Single(result.ItemChains, value => value.ChainId == "garden");
         Assert.Equal(5, garden.Levels.Count);
         Assert.True(garden.Levels[^1].IsMaxLevel);
         Assert.Equal(5, garden.Levels[0].SellPrice);
         Assert.Equal(80, garden.Levels[^1].SellPrice);
-        var generator = Assert.Single(result.Generators);
-        Assert.Equal(1, generator.EnergyCost);
-        Assert.Equal(30, generator.ChargeRecoverySeconds);
+        foreach (var chainId in new[] { "toy", "food", "rest" })
+        {
+            var chain = Assert.Single(result.ItemChains, value => value.ChainId == chainId);
+            Assert.Equal(Enumerable.Range(1, 8), chain.Levels.Select(value => value.Level));
+            Assert.All(chain.Levels.Take(chain.Levels.Count - 1), value => Assert.False(value.IsMaxLevel));
+            Assert.True(chain.Levels[^1].IsMaxLevel);
+        }
+
+        Assert.Equal(4, result.Generators.Count);
+        foreach (var (generatorId, chainId) in new[]
+        {
+            ("garden", "garden"), ("toy_basic", "toy"),
+            ("food_basic", "food"), ("rest_basic", "rest")
+        })
+        {
+            var generator = Assert.Single(result.Generators, value => value.GeneratorId == generatorId);
+            Assert.Equal(chainId, generator.GeneratedChainId);
+            Assert.Equal(1, generator.GeneratedLevel);
+            Assert.Equal(1, generator.EnergyCost);
+            Assert.Equal(5, generator.MaxCharges);
+            Assert.Equal(30, generator.ChargeRecoverySeconds);
+        }
         Assert.Equal(5, result.Quests.Count);
         Assert.Contains(result.Quests, value => value.QuestId == "weekly_merge_20" && value.PeriodType == "weekly");
     }

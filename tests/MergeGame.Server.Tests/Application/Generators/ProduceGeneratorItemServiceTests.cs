@@ -49,6 +49,54 @@ public sealed class ProduceGeneratorItemServiceTests
             value => value.QuestId == "daily_generate_5")).CurrentCount);
     }
 
+    [Theory]
+    [InlineData("toy_basic", "toy")]
+    [InlineData("food_basic", "food")]
+    [InlineData("rest_basic", "rest")]
+    public async Task ExecuteAsync_ProductionGenerator_CreatesServerDefinedLevelOneItem(
+        string generatorId,
+        string expectedChainId)
+    {
+        await using var fixture = await Fixture.CreateAsync();
+
+        var result = await fixture.Service.ExecuteAsync(
+            fixture.PlayerId, generatorId, 1, 1, $"produce-{generatorId}");
+
+        Assert.True(result.Success);
+        Assert.Equal(2, result.Response!.TargetSlot);
+        Assert.Equal(expectedChainId, result.Response.GeneratedItem.ChainId);
+        Assert.Equal(1, result.Response.GeneratedItem.Level);
+        Assert.Equal(2, result.Response.Board.Revision);
+        Assert.Equal(99, result.Response.Economy.Energy);
+        Assert.Equal(2, result.Response.Economy.Revision);
+        Assert.Equal(generatorId, result.Response.Generator.GeneratorId);
+        Assert.Equal(4, result.Response.Generator.Charges);
+        Assert.Equal(2, result.Response.Generator.Revision);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ConsumesOnlySelectedGeneratorCharge()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var catalog = new InMemoryGeneratorCatalog();
+        Assert.True(catalog.TryGet("food_basic", out var untouchedDefinition));
+        fixture.Db.PlayerGenerators.Add(PlayerGenerator.CreateInitial(
+            fixture.PlayerId, untouchedDefinition, Now.UtcDateTime));
+        await fixture.Db.SaveChangesAsync();
+        fixture.Db.ChangeTracker.Clear();
+
+        var result = await fixture.Service.ExecuteAsync(
+            fixture.PlayerId, "toy_basic", 1, 1, "independent-charge-key");
+
+        fixture.Db.ChangeTracker.Clear();
+        var states = await fixture.Db.PlayerGenerators.ToDictionaryAsync(value => value.GeneratorId);
+        Assert.True(result.Success);
+        Assert.Equal(4, states["toy_basic"].Charges);
+        Assert.Equal(2, states["toy_basic"].Revision);
+        Assert.Equal(5, states["food_basic"].Charges);
+        Assert.Equal(1, states["food_basic"].Revision);
+    }
+
     [Fact]
     public async Task ExecuteAsync_SameIdempotencyKey_ReplaysWithoutSecondChargeOrItem()
     {
@@ -77,6 +125,31 @@ public sealed class ProduceGeneratorItemServiceTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_SameIdempotencyKeyForDifferentGenerator_ReturnsConflictWithoutSecondMutation()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var first = await fixture.Service.ExecuteAsync(
+            fixture.PlayerId, "toy_basic", 1, 1, "shared-generator-key");
+        fixture.Db.ChangeTracker.Clear();
+
+        var conflict = await fixture.Service.ExecuteAsync(
+            fixture.PlayerId, "food_basic", 2, 2, "shared-generator-key");
+
+        fixture.Db.ChangeTracker.Clear();
+        var board = await fixture.Db.PlayerBoards.Include(value => value.Items).SingleAsync();
+        var economy = await fixture.Db.PlayerEconomies.SingleAsync();
+        var generators = await fixture.Db.PlayerGenerators.ToListAsync();
+        Assert.True(first.Success);
+        Assert.Equal(GeneratorProduceError.IdempotencyKeyConflict, conflict.Error);
+        Assert.Equal(3, board.Items.Count);
+        Assert.Equal(99, economy.Energy);
+        var generator = Assert.Single(generators);
+        Assert.Equal("toy_basic", generator.GeneratorId);
+        Assert.Equal(4, generator.Charges);
+        Assert.Single(await fixture.Db.GeneratorProductionReceipts.ToListAsync());
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnknownGenerator_ReturnsDedicatedError()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -89,17 +162,26 @@ public sealed class ProduceGeneratorItemServiceTests
         Assert.Empty(fixture.Db.GeneratorProductionReceipts);
     }
 
-    [Fact]
-    public async Task ExecuteAsync_StaleEitherRevision_ReturnsSingleStaleRevisionError()
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(1, 0)]
+    public async Task ExecuteAsync_StaleEitherRevision_DoesNotMutateAnyState(
+        long expectedBoardRevision,
+        long expectedEconomyRevision)
     {
         await using var fixture = await Fixture.CreateAsync();
 
         var result = await fixture.Service.ExecuteAsync(
-            fixture.PlayerId, "garden", expectedBoardRevision: 0, expectedEconomyRevision: 1, "stale-key");
+            fixture.PlayerId, "toy_basic", expectedBoardRevision, expectedEconomyRevision,
+            $"stale-{expectedBoardRevision}-{expectedEconomyRevision}");
 
         Assert.Equal(GeneratorProduceError.StaleRevision, result.Error);
         Assert.Equal(1, result.Board!.Revision);
         Assert.Equal(100, result.Economy!.Energy);
+        Assert.Equal(2, (await fixture.Db.PlayerBoards.Include(value => value.Items).SingleAsync()).Items.Count);
+        Assert.Equal(1, (await fixture.Db.PlayerEconomies.SingleAsync()).Revision);
+        Assert.Empty(await fixture.Db.PlayerGenerators.ToListAsync());
+        Assert.Empty(await fixture.Db.GeneratorProductionReceipts.ToListAsync());
     }
 
     [Fact]
@@ -122,6 +204,8 @@ public sealed class ProduceGeneratorItemServiceTests
 
         Assert.Equal(GeneratorProduceError.FullBoard, result.Error);
         Assert.Equal(100, (await fixture.Db.PlayerEconomies.SingleAsync()).Energy);
+        Assert.Empty(await fixture.Db.PlayerGenerators.ToListAsync());
+        Assert.Empty(await fixture.Db.GeneratorProductionReceipts.ToListAsync());
     }
 
     [Fact]
@@ -167,6 +251,10 @@ public sealed class ProduceGeneratorItemServiceTests
         Assert.True(result.Generator!.IsCoolingDown);
         Assert.Equal(30, result.Generator.CooldownRemainingSeconds);
         Assert.Equal(100, (await fixture.Db.PlayerEconomies.SingleAsync()).Energy);
+        var persisted = await fixture.Db.PlayerGenerators.SingleAsync();
+        Assert.Equal(0, persisted.Charges);
+        Assert.Equal(6, persisted.Revision);
+        Assert.Empty(await fixture.Db.GeneratorProductionReceipts.ToListAsync());
     }
 
     private sealed class Fixture : IAsyncDisposable
