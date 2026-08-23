@@ -13,8 +13,16 @@ $ErrorActionPreference = 'Stop'
 
 function New-RandomSecret {
     # 48바이트 난수는 MySQL 비밀번호와 JWT HMAC 키에 충분한 엔트로피를 제공합니다.
-    $bytes = [Security.Cryptography.RandomNumberGenerator]::GetBytes(48)
-    return [Convert]::ToBase64String($bytes)
+    # 정적 GetBytes(int)는 최신 .NET에만 있으므로 Windows PowerShell 5.1에서도 동작하는 인스턴스 API를 사용합니다.
+    $bytes = New-Object byte[] 48
+    $generator = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $generator.GetBytes($bytes)
+        return [Convert]::ToBase64String($bytes)
+    }
+    finally {
+        $generator.Dispose()
+    }
 }
 
 $env:MYSQL_ROOT_PASSWORD = New-RandomSecret

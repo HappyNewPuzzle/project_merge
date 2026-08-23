@@ -11,6 +11,13 @@ namespace MergeGame.Server.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // MySQL은 외래 키가 사용 중인 마지막 선행 인덱스를 삭제하지 못합니다.
+            // player_id 단일 인덱스를 먼저 마련한 뒤 기존 슬롯 유일 인덱스를 제거해야 신규 DB에서도 안전합니다.
+            migrationBuilder.CreateIndex(
+                name: "IX_board_items_player_id",
+                table: "board_items",
+                column: "player_id");
+
             migrationBuilder.DropIndex(
                 name: "ux_board_items_player_slot",
                 table: "board_items");
@@ -41,11 +48,6 @@ namespace MergeGame.Server.Infrastructure.Persistence.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
-                name: "IX_board_items_player_id",
-                table: "board_items",
-                column: "player_id");
-
-            migrationBuilder.CreateIndex(
                 name: "ux_board_action_receipts_player_idempotency",
                 table: "board_action_receipts",
                 columns: new[] { "player_id", "idempotency_key" },
@@ -58,15 +60,16 @@ namespace MergeGame.Server.Infrastructure.Persistence.Migrations
             migrationBuilder.DropTable(
                 name: "board_action_receipts");
 
-            migrationBuilder.DropIndex(
-                name: "IX_board_items_player_id",
-                table: "board_items");
-
+            // 롤백에서도 외래 키를 지지하는 대체 인덱스를 먼저 복원합니다.
             migrationBuilder.CreateIndex(
                 name: "ux_board_items_player_slot",
                 table: "board_items",
                 columns: new[] { "player_id", "slot_index" },
                 unique: true);
+
+            migrationBuilder.DropIndex(
+                name: "IX_board_items_player_id",
+                table: "board_items");
         }
     }
 }
