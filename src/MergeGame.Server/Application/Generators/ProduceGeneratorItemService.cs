@@ -183,6 +183,7 @@ public sealed class ProduceGeneratorItemService
 
         try
         {
+            await ItemCollection.RecordTrackedItemsAsync(_dbContext, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return GeneratorProduceResult.Succeeded(response);
         }

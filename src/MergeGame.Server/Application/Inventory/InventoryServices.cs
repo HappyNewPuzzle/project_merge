@@ -146,6 +146,7 @@ public sealed class TransferInventoryItemService
             JsonSerializer.Serialize(response, ReceiptJsonOptions), now));
         try
         {
+            await ItemCollection.RecordTrackedItemsAsync(_db, token);
             await _db.SaveChangesAsync(token);
             return InventoryTransferServiceResult.Succeeded(response);
         }

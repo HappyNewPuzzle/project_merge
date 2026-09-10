@@ -56,6 +56,7 @@ public sealed class InitializePlayerBoardService
 
         try
         {
+            await ItemCollection.RecordTrackedItemsAsync(_dbContext, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return new InitializeBoardResult(
                 BoardInitializationStatus.Created,

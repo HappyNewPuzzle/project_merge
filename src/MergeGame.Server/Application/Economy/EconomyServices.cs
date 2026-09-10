@@ -265,6 +265,7 @@ public sealed class GenerateBoardItemService
         try
         {
             // 보드 아이템 추가, 보드 revision, 에너지와 경제 revision은 하나의 트랜잭션으로 저장됩니다.
+            await ItemCollection.RecordTrackedItemsAsync(_dbContext, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException)

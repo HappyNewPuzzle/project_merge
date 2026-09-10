@@ -143,6 +143,7 @@ public sealed class GameBootstrapService
         try
         {
             // 모든 누락 상태는 한 SaveChanges 트랜잭션으로 생성되어 부분 초기화가 남지 않습니다.
+            await ItemCollection.RecordTrackedItemsAsync(_dbContext, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException)
@@ -166,7 +167,8 @@ public sealed class GameBootstrapService
             generatorStates,
             quests.OrderBy(value => value.QuestId, StringComparer.Ordinal)
                 .Select(value => value.ToSnapshot()).ToArray(),
-            social);
+            social,
+            await ItemCollection.ReadAsync(_dbContext, playerId, cancellationToken));
     }
 
     private async Task<SocialState> BuildSocialStateAsync(
@@ -210,4 +212,5 @@ public sealed record GameBootstrapResponse(
     InventoryState Inventory,
     IReadOnlyList<GeneratorState> Generators,
     IReadOnlyList<QuestSnapshot> Quests,
-    SocialState Social);
+    SocialState Social,
+    CollectionState Collection);

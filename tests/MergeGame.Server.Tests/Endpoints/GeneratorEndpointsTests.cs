@@ -21,6 +21,61 @@ namespace MergeGame.Server.Tests.Endpoints;
 /// <summary>실제 HTTP 파이프라인에서 생성 응답 계약과 정지 계정 선차단을 확인합니다.</summary>
 public sealed class GeneratorEndpointsTests
 {
+    /// <summary>실제 인증 파이프라인에서 발견의 영속성·격리·실패·멱등성을 함께 검사합니다.</summary>
+    [Fact]
+    public async Task Collection_RecordsConfirmedResultsAndSurvivesConsumption()
+    {
+        await using var factory = new GeneratorEndpointFactory();
+        var (client, _) = await CreateAuthenticatedPlayerAsync(factory, false);
+        using var bootstrap = await client.PostAsync("/api/v1/game/bootstrap", null);
+        Assert.Equal(HttpStatusCode.OK, bootstrap.StatusCode);
+        var initial = await client.GetFromJsonAsync<MergeGame.Server.Application.Boards.CollectionState>("/api/v1/collection");
+        Assert.Single(initial!.DiscoveredItems);
+        Assert.Equal("garden", initial.DiscoveredItems[0].ChainId);
+
+        var request = new { expectedBoardRevision = 1, expectedEconomyRevision = 1, idempotencyKey = "collection-toy" };
+        using var generated = await client.PostAsJsonAsync("/api/v1/board/generators/toy_basic/produce", request);
+        Assert.Equal(HttpStatusCode.OK, generated.StatusCode);
+        using var replay = await client.PostAsJsonAsync("/api/v1/board/generators/toy_basic/produce", request);
+        Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
+        using var failed = await client.PostAsJsonAsync("/api/v1/board/generators/food_basic/produce",
+            new { expectedBoardRevision = 1, expectedEconomyRevision = 1, idempotencyKey = "stale-food" });
+        Assert.Equal(HttpStatusCode.Conflict, failed.StatusCode);
+        using var merged = await client.PostAsJsonAsync("/api/v1/board/merge",
+            new { sourceSlot = 0, targetSlot = 1, expectedRevision = 2 });
+        Assert.Equal(HttpStatusCode.OK, merged.StatusCode);
+        var collection = await client.GetFromJsonAsync<MergeGame.Server.Application.Boards.CollectionState>("/api/v1/collection");
+        Assert.Equal(3, collection!.DiscoveredItems.Count);
+        Assert.Contains(collection.DiscoveredItems, x => x.ChainId == "garden" && x.Level == 1);
+        Assert.Contains(collection.DiscoveredItems, x => x.ChainId == "garden" && x.Level == 2);
+        Assert.Contains(collection.DiscoveredItems, x => x.ChainId == "toy" && x.Level == 1);
+        Assert.DoesNotContain(collection.DiscoveredItems, x => x.ChainId == "food");
+        using var again = await client.PostAsync("/api/v1/game/bootstrap", null);
+        var state = await again.Content.ReadFromJsonAsync<MergeGame.Server.Application.Game.GameBootstrapResponse>();
+        Assert.Equal(collection.DiscoveredItems, state!.Collection.DiscoveredItems);
+
+        var (other, _) = await CreateAuthenticatedPlayerAsync(factory, false);
+        var otherCollection = await other.GetFromJsonAsync<MergeGame.Server.Application.Boards.CollectionState>("/api/v1/collection");
+        Assert.Empty(otherCollection!.DiscoveredItems);
+        using var anonymous = factory.CreateClient();
+        using var denied = await anonymous.GetAsync("/api/v1/collection");
+        Assert.Equal(HttpStatusCode.Unauthorized, denied.StatusCode);
+    }
+
+    [Fact]
+    public async Task Collection_LegacyBoardMerge_PreservesInputAndOutputDefinitions()
+    {
+        await using var factory = new GeneratorEndpointFactory();
+        var (client, playerId) = await CreateAuthenticatedPlayerAsync(factory, false);
+        // 도감 도입 전의 보드를 모사합니다. 발견 행 없이 바로 머지해도 입력 단계가 보존되어야 합니다.
+        await SeedGameplayStateAsync(factory, playerId);
+        using var merged = await client.PostAsJsonAsync("/api/v1/board/actions",
+            new { sourceSlot = 0, targetSlot = 1, expectedBoardRevision = 1, idempotencyKey = "legacy-merge" });
+        Assert.Equal(HttpStatusCode.OK, merged.StatusCode);
+        var collection = await client.GetFromJsonAsync<MergeGame.Server.Application.Boards.CollectionState>("/api/v1/collection");
+        Assert.Equal(new[] { 1, 2 }, collection!.DiscoveredItems.Select(x => x.Level));
+    }
+
     [Fact]
     public async Task Produce_AuthenticatedPlayer_ReturnsServerSelectedResultAndReplays()
     {

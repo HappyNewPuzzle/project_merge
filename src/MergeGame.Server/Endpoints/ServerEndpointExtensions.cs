@@ -32,6 +32,7 @@ public static class ServerEndpointExtensions
         app.MapGameEndpoints();
         app.MapBoardEndpoints();
         app.MapInventoryEndpoints();
+        app.MapCollectionEndpoints();
         app.MapEconomyEndpoints();
         app.MapQuestEndpoints();
         app.MapSocialEndpoints();

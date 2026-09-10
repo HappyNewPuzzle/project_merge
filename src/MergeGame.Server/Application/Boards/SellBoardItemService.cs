@@ -93,6 +93,7 @@ public sealed class SellBoardItemService
 
         try
         {
+            await ItemCollection.RecordTrackedItemsAsync(_dbContext, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return SellBoardItemServiceResult.Succeeded(response);
         }

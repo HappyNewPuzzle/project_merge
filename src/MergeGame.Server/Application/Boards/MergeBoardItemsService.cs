@@ -75,9 +75,10 @@ public sealed class MergeBoardItemsService
         {
             // EF Core는 보드 revision을 UPDATE WHERE 절에 포함하고 영향받은 행이 0개면 충돌 예외를 발생시킵니다.
             // 아이템 삭제와 레벨 변경은 같은 SaveChanges 트랜잭션이므로 충돌 시 모두 롤백됩니다.
+            await ItemCollection.RecordTrackedItemsAsync(_dbContext, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateConcurrencyException)
+        catch (DbUpdateException)
         {
             _dbContext.ChangeTracker.Clear();
             var currentBoard = await LoadBoardAsync(playerId, cancellationToken);
