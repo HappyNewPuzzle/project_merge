@@ -21,6 +21,23 @@ namespace MergeGame.Server.Tests.Endpoints;
 /// <summary>실제 HTTP 파이프라인에서 생성 응답 계약과 정지 계정 선차단을 확인합니다.</summary>
 public sealed class GeneratorEndpointsTests
 {
+    [Fact]
+    public async Task CreateGuest_ReturnsExistingBodyWithoutUnresolvableLocation()
+    {
+        await using var factory = new GeneratorEndpointFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.PostAsync("/api/v1/players/guest", null);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Null(response.Headers.Location);
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var fields = body.RootElement.EnumerateObject().Select(property => property.Name).ToArray();
+        Assert.Equal(new[] { "playerId", "displayName", "guestToken", "createdAtUtc" }, fields);
+        Assert.NotEqual(Guid.Empty, body.RootElement.GetProperty("playerId").GetGuid());
+        Assert.False(string.IsNullOrWhiteSpace(body.RootElement.GetProperty("guestToken").GetString()));
+    }
+
     /// <summary>실제 인증 파이프라인에서 발견의 영속성·격리·실패·멱등성을 함께 검사합니다.</summary>
     [Fact]
     public async Task Collection_RecordsConfirmedResultsAndSurvivesConsumption()

@@ -60,6 +60,7 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 로그인 직후 `POST /api/v1/game/bootstrap`을 호출하면 누락된 게임 상태를 한 번에 초기화하고
 플레이어·보드·경제·생성기·퀘스트·소셜 전체 스냅샷을 받을 수 있습니다. 자세한 흐름은
 [17단계 문서](docs/stages/17-game-bootstrap.md)를 참고하세요.
+신규 Unity 클라이언트는 이 API만 초기화에 사용하세요. `POST /api/v1/board/`는 기존 클라이언트 호환용으로만 유지합니다.
 
 ## 로그인 및 인증 API
 
@@ -106,7 +107,7 @@ curl.exe -X POST https://localhost:7001/api/v1/players/guest
 
 ## 머지 보드 API
 
-- `POST /api/v1/board/`: 인증 플레이어의 5×7 보드 최초 생성
+- `POST /api/v1/board/`: 폐기 예정 호환 API — 기존 클라이언트의 5×7 보드 최초 생성용(신규 클라이언트 사용 금지)
 - `GET /api/v1/board/`: 현재 보드와 revision 조회
 - `POST /api/v1/board/merge`: 두 슬롯의 서버 검증 머지
 - `POST /api/v1/board/actions`: 드래그를 이동·머지·교환으로 서버 판정

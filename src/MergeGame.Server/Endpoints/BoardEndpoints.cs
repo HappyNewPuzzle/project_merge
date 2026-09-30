@@ -23,6 +23,8 @@ public static class BoardEndpoints
 
         group.MapPost("/", InitializeBoardAsync)
             .WithName("InitializeBoard")
+            // Existing clients may still call this route; new clients initialize through game/bootstrap.
+            .WithMetadata(new ObsoleteAttribute("Use POST /api/v1/game/bootstrap"))
             .Produces<BoardState>(StatusCodes.Status200OK)
             .Produces<BoardState>(StatusCodes.Status201Created)
             .Produces<BoardErrorResponse>(StatusCodes.Status404NotFound);

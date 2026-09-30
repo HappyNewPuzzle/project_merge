@@ -59,6 +59,12 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
         foreach (var path in requiredPaths)
             Assert.True(paths.TryGetProperty(path, out _), $"OpenAPI에 {path} 경로가 없습니다.");
 
+        // 이전 클라이언트용 보드 초기화는 노출하되 신규 클라이언트는 Bootstrap을 사용합니다.
+        Assert.True(paths.GetProperty("/api/v1/board").GetProperty("post")
+            .GetProperty("deprecated").GetBoolean());
+        Assert.False(paths.GetProperty("/api/v1/game/bootstrap").GetProperty("post")
+            .TryGetProperty("deprecated", out _));
+
         // IResult 처리기의 성공 DTO가 빠지면 SDK 생성기가 object로 생성하므로 스키마 참조도 고정합니다.
         var boardSchemaReference = paths.GetProperty("/api/v1/board")
             .GetProperty("get").GetProperty("responses").GetProperty("200")

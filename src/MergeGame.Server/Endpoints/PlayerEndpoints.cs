@@ -50,8 +50,8 @@ public static class PlayerEndpoints
             createdPlayer.GuestToken,
             createdPlayer.CreatedAtUtc);
 
-        // Location은 이후 플레이어 조회 API가 사용할 표준 리소스 주소를 미리 명시합니다.
-        return Results.Created($"/api/v1/players/{createdPlayer.PlayerId}", response);
+        // 플레이어 ID 조회 경로가 없으므로 201만 반환하고 잘못된 Location 헤더를 만들지 않습니다.
+        return Results.Json(response, statusCode: StatusCodes.Status201Created);
     }
 
     /// <summary>

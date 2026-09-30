@@ -58,6 +58,8 @@ internal sealed class ApiSecurityOperationFilter : IOperationFilter
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var metadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
+        // Endpoint metadata marks compatibility routes without changing their runtime behavior.
+        operation.Deprecated = metadata.OfType<ObsoleteAttribute>().Any();
         var allowsAnonymous = metadata.OfType<IAllowAnonymous>().Any();
         var authorization = metadata.OfType<IAuthorizeData>().ToArray();
         var requiresAuthorization = authorization.Length > 0;
