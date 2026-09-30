@@ -35,6 +35,8 @@
 - [22단계: 플레이어 인벤토리와 보관함](docs/stages/22-player-inventory.md)
 - [23단계: 운영 안전장치와 배포 자동화](docs/stages/23-production-operations.md)
 - [24단계: Production Toy·Food·Rest Generator 콘텐츠](docs/stages/24-production-three-generator-content.md)
+- [25단계: 서버 권위 아이템 도감](docs/stages/25-player-item-collection.md)
+- [26단계: Stage 25 MySQL 통합·동시성 검증](docs/stages/26-stage25-mysql-verification.md)
 
 ## 빠른 실행
 
@@ -168,12 +170,15 @@ Docker가 실행 중인 개발 PC에서는 다음 명령으로 MySQL, 마이그�
 - Unity 클라이언트: [`clients/unity`](clients/unity)
 - 공개 콘텐츠 카탈로그: `GET /api/v1/content/catalog`
 - 공개 서버·클라이언트 호환 버전: `GET /api/v1/version`
+- 인증된 플레이어 도감: `GET /api/v1/collection`
 
 서버 실행 후 Swagger UI에서 요청·응답 형식과 Bearer 인증을 시험할 수 있습니다.
 Unity 적용 및 revision 충돌 처리 방법은 [8단계 문서](docs/stages/08-openapi-and-unity-client.md)를
 참고하세요.
 아이템·보드·경제·생성기 규칙의 버전과 ETag 캐시는
 [18단계 문서](docs/stages/18-versioned-content-catalog.md)를 참고하세요.
+v1 오류 응답은 [API 오류 계약](docs/contracts/api-errors-v1.md), 고정 OpenAPI는
+[v1 스냅샷](docs/contracts/openapi-v1.json)을 참고하세요.
 
 ## 운영 배포
 

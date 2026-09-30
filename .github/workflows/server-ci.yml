@@ -28,6 +28,7 @@ jobs:
     env:
       ConnectionStrings__MergeGameDatabase: Server=127.0.0.1;Port=3306;Database=merge_game_ci;User=merge_game_ci;Password=ci-app-password
       Jwt__SigningKey: 8f4d2c7a6b1e9f305d8c4a7e2b6f9130-ci-only-signing-key
+      SV026_MYSQL_ADMIN: Server=127.0.0.1;Port=3306;Database=mysql;User=root;Password=ci-root-password;SslMode=None
 
     steps:
       - name: Checkout

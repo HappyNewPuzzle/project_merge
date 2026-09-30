@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -85,6 +86,24 @@ public sealed class OpenApiContractTests : IClassFixture<MergeGameApiFactory>
         Assert.True(requestProperties.TryGetProperty("idempotencyKey", out _));
         foreach (var forbidden in new[] { "itemId", "chainId", "level", "energyCost", "cost", "targetSlot" })
             Assert.False(requestProperties.TryGetProperty(forbidden, out _), $"요청에 서버 권위 필드 {forbidden}이 노출됐습니다.");
+    }
+
+    [Fact]
+    public async Task OpenApiJson_MatchesVersionControlledSnapshot()
+    {
+        using var response = await _client.GetAsync("/swagger/v1/swagger.json");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var actual = JsonNode.Parse(await response.Content.ReadAsStringAsync());
+        var path = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "../../../../../docs/contracts/openapi-v1.json"));
+        // 의도적인 계약 변경 때만 갱신 플래그를 지정하고 차이를 코드 리뷰에 노출합니다.
+        if (Environment.GetEnvironmentVariable("UPDATE_OPENAPI_SNAPSHOT") == "1")
+        {
+            await File.WriteAllTextAsync(path, actual!.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            return;
+        }
+        Assert.True(JsonNode.DeepEquals(JsonNode.Parse(await File.ReadAllTextAsync(path)), actual),
+            "OpenAPI 계약이 변경됐습니다. 변경을 검토한 뒤 UPDATE_OPENAPI_SNAPSHOT=1로 스냅샷을 갱신하세요.");
     }
 
     [Fact]

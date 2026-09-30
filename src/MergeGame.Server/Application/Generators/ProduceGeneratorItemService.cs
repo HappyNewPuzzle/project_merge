@@ -5,6 +5,7 @@ using MergeGame.Server.Domain.Economy;
 using MergeGame.Server.Domain.Generators;
 using MergeGame.Server.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using MergeGame.Server.Application.Quests;
 
 namespace MergeGame.Server.Application.Generators;
@@ -190,6 +191,17 @@ public sealed class ProduceGeneratorItemService
         catch (DbUpdateException)
         {
             // 동시 요청의 유니크 키 또는 revision 충돌이라면 추적 상태를 버리고 승자의 영수증을 재조회합니다.
+            _dbContext.ChangeTracker.Clear();
+            var concurrentReplay = await TryReplayAsync(
+                playerId, generatorId, idempotencyKey, cancellationToken);
+            return concurrentReplay ?? GeneratorProduceResult.Failed(GeneratorProduceError.StaleRevision);
+        }
+        catch (InvalidOperationException error) when (
+            error.InnerException is DbUpdateException { InnerException: MySqlException { Number: 1213 } })
+        {
+            // Pomelo는 MySQL 데드락을 DbUpdateException 바깥의 일시적 오류로 감쌉니다.
+            // 진 요청의 트랜잭션은 MySQL이 롤백했으므로 영수증을 재조회하고, 승자가 아직
+            // 커밋 중이면 클라이언트가 같은 키로 다시 시도할 수 있는 충돌을 반환합니다.
             _dbContext.ChangeTracker.Clear();
             var concurrentReplay = await TryReplayAsync(
                 playerId, generatorId, idempotencyKey, cancellationToken);
