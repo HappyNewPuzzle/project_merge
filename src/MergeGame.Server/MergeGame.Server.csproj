@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <!-- Authorization Bearer 헤더의 JWT 서명, 발급자, 대상, 만료를 검증합니다. -->
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.29" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.30" />
     <!-- 마이그레이션 생성 도구가 서버의 EF Core 모델을 분석할 때만 사용합니다. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.29">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
